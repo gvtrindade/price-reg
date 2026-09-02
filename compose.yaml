@@ -1,0 +1,21 @@
+services:
+  db:
+    image: postgres:latest
+    container_name: scaffold-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: sql123
+      POSTGRES_DB: scaffold
+    ports:
+      - "5432:5432"
+    volumes:
+      - db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d scaffold"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  db-data:

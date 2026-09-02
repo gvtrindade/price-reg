@@ -1,0 +1,139 @@
+{
+  "HomePage": {
+    "title": "Olá mundo!"
+  },
+  "Metadata": {
+    "appName": "Aplicativo",
+    "appDescription": "Descrição do aplicativo"
+  },
+  "Auth": {
+    "backToLogin": "Voltar para entrar"
+  },
+  "Login": {
+    "title": "Entrar",
+    "description": "Digite suas credenciais para acessar sua conta",
+    "emailLabel": "Email *",
+    "emailPlaceholder": "you@example.com",
+    "passwordLabel": "Senha *",
+    "passwordPlaceholder": "Digite sua senha",
+    "forgotPassword": "Esqueceu a senha?",
+    "accountNotVerified": "Sua conta não está ativada. Por favor, verifique seu email.",
+    "invalidCredentials": "Email ou senha inválidos",
+    "resentSuccess": "Email de verificação reenviado com sucesso!",
+    "resentError": "Falha ao reenviar email de verificação. Por favor, tente novamente.",
+    "resendVerification": "Reenviar email de verificação",
+    "sending": "Enviando...",
+    "submit": "Entrar",
+    "submitting": "Entrando...",
+    "orContinueWith": "Ou continue com",
+    "google": "Google",
+    "noAccount": "Não tem uma conta?",
+    "signUpLink": "Cadastre-se"
+  },
+  "Register": {
+    "title": "Criar conta",
+    "description": "Preencha seus dados para criar uma conta",
+    "nameLabel": "Nome completo *",
+    "namePlaceholder": "Seu nome",
+    "emailLabel": "Email *",
+    "emailPlaceholder": "you@example.com",
+    "passwordLabel": "Senha *",
+    "passwordPlaceholder": "Crie uma senha",
+    "confirmPasswordLabel": "Confirmar senha *",
+    "confirmPasswordPlaceholder": "Confirme sua senha",
+    "submit": "Criar conta",
+    "submitting": "Criando conta...",
+    "orContinueWith": "Ou continue com",
+    "google": "Google",
+    "haveAccount": "Já tem uma conta?",
+    "signInLink": "Entrar",
+    "verifyEmailTitle": "Verifique seu email",
+    "verifyEmailDescription": "Enviamos um link de verificação para seu email. Clique no link para ativar sua conta."
+  },
+  "ForgotPassword": {
+    "title": "Esqueceu a senha",
+    "description": "Digite seu email e enviaremos um link de reset",
+    "emailLabel": "Email",
+    "emailPlaceholder": "you@example.com",
+    "submit": "Enviar link de reset",
+    "submitting": "Enviando...",
+    "sentTitle": "Confira seu email",
+    "sentDescription": "Se uma conta existir com este email, você receberá um link de reset de senha em breve."
+  },
+  "ResetPassword": {
+    "title": "Resetar senha",
+    "description": "Digite sua nova senha abaixo",
+    "newPasswordLabel": "Nova senha",
+    "newPasswordPlaceholder": "Digite nova senha",
+    "confirmPasswordLabel": "Confirmar nova senha",
+    "confirmPasswordPlaceholder": "Confirmar nova senha",
+    "submit": "Resetar senha",
+    "submitting": "Resetando...",
+    "invalidLinkTitle": "Link inválido",
+    "invalidLinkDescription": "Este link de reset de senha é inválido ou expirou.",
+    "requestNewLink": "Solicitar novo link de reset",
+    "invalidToken": "Token de reset inválido ou ausente"
+  },
+  "EmailVerified": {
+    "metaTitle": "Email Verificado",
+    "metaDescription": "Seu email foi verificado com sucesso",
+    "title": "Email verificado",
+    "description": "Seu email foi verificado com sucesso. Sua conta agora está ativa.",
+    "goToProtected": "Ir para página protegida"
+  },
+  "Protected": {
+    "title": "Esta página é protegida"
+  },
+  "LogoutButton": {
+    "label": "Sair"
+  },
+  "PasswordStrength": {
+    "minLength": "Pelo menos 8 caracteres",
+    "lowercase": "Letra minúscula",
+    "uppercase": "Letra maiúscula",
+    "number": "Número",
+    "symbol": "Símbolo"
+  },
+  "Validation": {
+    "emailRequired": "Email é obrigatório",
+    "emailInvalid": "Por favor, digite um endereço de email válido",
+    "passwordRequired": "Senha é obrigatória",
+    "passwordMinLength": "Senha deve ter pelo menos 8 caracteres",
+    "lowercaseRequired": "Deve conter uma letra minúscula",
+    "uppercaseRequired": "Deve conter uma letra maiúscula",
+    "numberRequired": "Deve conter um número",
+    "symbolRequired": "Deve conter um símbolo",
+    "confirmPasswordRequired": "Por favor, confirme sua senha",
+    "passwordsMismatch": "As senhas não correspondem",
+    "nameRequired": "Nome é obrigatório",
+    "nameMinLength": "Nome deve ter pelo menos 2 caracteres",
+    "fullNameRequired": "Por favor, digite seu primeiro e último nome"
+  },
+  "Errors": {
+    "invalidCredentials": "Email ou senha inválidos",
+    "signUpFailed": "Falha ao criar conta",
+    "invalidResetToken": "Token de reset inválido ou expirado"
+  },
+  "Emails": {
+    "resetPassword": {
+      "subject": "Resetar sua senha",
+      "heading": "Resetar Senha",
+      "intro": "Recebemos um pedido para resetar a senha da sua conta.",
+      "instructions": "Clique no botão abaixo para criar uma nova senha:",
+      "cta": "Resetar senha",
+      "ignoreNote": "Se você não solicitou este reset, pode ignorar este email com segurança.",
+      "expiryNote": "Este link expira em 1 hora.",
+      "fallbackNote": "Se o botão acima não funcionar, copie e cole este link no seu navegador:"
+    },
+    "verification": {
+      "subject": "Verifique seu email",
+      "heading": "Verifique Seu Email",
+      "intro": "Obrigado por criar uma conta!",
+      "instructions": "Clique no botão abaixo para verificar seu endereço de email e ativar sua conta:",
+      "cta": "Verificar Email",
+      "ignoreNote": "Se você não criou uma conta, pode ignorar este email com segurança.",
+      "expiryNote": "Este link expira em 1 hora.",
+      "fallbackNote": "Se o botão acima não funcionar, copie e cole este link no seu navegador:"
+    }
+  }
+}
