@@ -20,7 +20,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
-import { MoreHorizontal } from "lucide-react";
+import { ArrowLeft, MoreHorizontal } from "lucide-react";
 import { useTranslations } from "next-intl";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -28,11 +28,11 @@ import { useState } from "react";
 
 interface BookData {
   id: string;
-  title: string;
+  title: string | null;
   isbn: string | null;
   conservationState: string;
   status: string;
-  price: string;
+  price: string | null;
 }
 
 export function BookDetail({
@@ -65,17 +65,24 @@ export function BookDetail({
 
   return (
     <main className="mx-auto max-w-2xl space-y-6 p-6">
-      <Link
-        href={`/events/${eventId}`}
-        className="text-sm text-muted-foreground hover:underline"
-      >
-        {t("backToEvent")}
-      </Link>
+      <div>
+        <Button
+          variant="ghost"
+          size="sm"
+          className="-ml-2"
+          render={<Link href={`/events/${eventId}`} />}
+          nativeButton={false}
+        >
+          <ArrowLeft />
+          {t("backToEvent")}
+        </Button>
+      </div>
 
       <div className="flex items-center gap-2">
         <h1 className="min-w-0 flex-1">
           <InlineEdit
-            value={book.title}
+            value={book.title ?? ""}
+            placeholder={t("unnamed")}
             editable={canEdit}
             label={t("title")}
             className="text-2xl font-semibold"
@@ -106,11 +113,14 @@ export function BookDetail({
 
       <dl className="space-y-1 rounded-lg border">
         <Field label={t("isbn")}>
-          <span className="text-sm tabular-nums">{book.isbn ?? "—"}</span>
+          <span className="text-sm tabular-nums">
+            {book.isbn || <span className="text-muted-foreground">—</span>}
+          </span>
         </Field>
         <Field label={t("price")}>
           <InlineEdit
-            value={book.price}
+            value={book.price ?? ""}
+            placeholder={t("notPriced")}
             editable={canEdit}
             label={t("price")}
             inputMode="decimal"
@@ -143,7 +153,9 @@ export function BookDetail({
           <AlertDialogHeader>
             <AlertDialogTitle>{t("deleteConfirmTitle")}</AlertDialogTitle>
             <AlertDialogDescription>
-              {t("deleteConfirmDescription", { name: book.title })}
+              {t("deleteConfirmDescription", {
+                name: book.title ?? book.isbn ?? "",
+              })}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

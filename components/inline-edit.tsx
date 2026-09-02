@@ -12,6 +12,7 @@ interface InlineEditProps {
   inputClassName?: string;
   inputMode?: "text" | "decimal";
   label?: string;
+  placeholder?: string;
   error?: string | null;
   onError?: (error: string | null) => void;
 }
@@ -24,6 +25,7 @@ export function InlineEdit({
   inputClassName,
   inputMode = "text",
   label,
+  placeholder,
   error,
   onError,
 }: InlineEditProps) {
@@ -66,7 +68,12 @@ export function InlineEdit({
     onError?.(null);
   }
 
-  if (!editable) return <span className={className}>{value}</span>;
+  if (!editable)
+    return (
+      <span className={cn(!value && "text-muted-foreground", className)}>
+        {value || placeholder || "—"}
+      </span>
+    );
 
   if (editing) {
     return (
@@ -108,7 +115,9 @@ export function InlineEdit({
         className,
       )}
     >
-      {value}
+      {value || (
+        <span className="text-muted-foreground">{placeholder ?? "—"}</span>
+      )}
     </button>
   );
 }

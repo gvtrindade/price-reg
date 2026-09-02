@@ -165,7 +165,9 @@
     "invalidTitle": "Book name is required",
     "invalidPrice": "Please enter a valid price",
     "invalidConservationState": "Conservation state is required",
-    "invalidStatus": "Status is required"
+    "invalidStatus": "Status is required",
+    "sessionExpired": "Your session has expired. Please sign in again.",
+    "bookNameOrIsbnRequired": "Enter at least a name or an ISBN for the book"
   },
   "Emails": {
     "resetPassword": {
@@ -264,7 +266,8 @@
     "deleteBook": "Delete book",
     "deleteBookConfirmTitle": "Delete this book?",
     "deleteBookConfirmDescription": "“{name}” will be permanently deleted.",
-    "delete": "Delete"
+    "delete": "Delete",
+    "backToEvents": "Back to events"
   },
   "BookDetail": {
     "backToEvent": "Back to event",
@@ -278,6 +281,44 @@
     "deleteConfirmTitle": "Delete this book?",
     "deleteConfirmDescription": "“{name}” will be permanently deleted.",
     "keep": "Keep",
-    "delete": "Delete"
+    "delete": "Delete",
+    "unnamed": "Unnamed",
+    "notPriced": "Not priced"
+  },
+  "AddBookDrawer": {
+    "addBook": "Add book",
+    "title": "Add books",
+    "description": "Choose how you want to add books to this event.",
+    "manual": "Manual",
+    "manualDescription": "Register a book by filling in a form.",
+    "scan": "Scan",
+    "manualFormDescription": "Enter at least a name or an ISBN, plus the conservation state.",
+    "nameField": "Name",
+    "namePlaceholder": "Book name",
+    "isbnField": "ISBN",
+    "isbnPlaceholder": "Book ISBN",
+    "conservationState": "Conservation state",
+    "conservationPlaceholder": "e.g. good",
+    "nameOrIsbnRequired": "Enter at least a name or an ISBN.",
+    "cancel": "Cancel",
+    "continue": "Continue",
+    "confirmTitle": "Confirm book",
+    "confirmDescription": "Register “{name}” in “{state}” condition?",
+    "back": "Back",
+    "confirm": "Register",
+    "creating": "Creating...",
+    "scanDescription": "Register a book by scanning its barcode.",
+    "scanHint": "Point the camera at the barcode of the book."
+  },
+  "BookScanner": {
+    "starting": "Starting camera...",
+    "unsupported": "Barcode scanning is not supported by this browser. You can enter the ISBN manually.",
+    "error": "Could not access the camera. Check the permissions or enter the ISBN manually.",
+    "enterManually": "Enter manually",
+    "hint": "Hold the barcode inside the frame.",
+    "camera": "Camera",
+    "cameraNumber": "Camera {number}",
+    "cameraDefault": "Default camera",
+    "setDefault": "Set as default"
   }
 }

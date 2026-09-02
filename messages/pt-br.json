@@ -135,7 +135,9 @@
     "invalidTitle": "O nome do livro é obrigatório",
     "invalidPrice": "Digite um preço válido",
     "invalidConservationState": "O estado de conservação é obrigatório",
-    "invalidStatus": "O status é obrigatório"
+    "invalidStatus": "O status é obrigatório",
+    "sessionExpired": "Sua sessão expirou. Entre novamente.",
+    "bookNameOrIsbnRequired": "Informe pelo menos um nome ou ISBN para o livro"
   },
   "Emails": {
     "resetPassword": {
@@ -264,7 +266,8 @@
     "deleteBook": "Excluir livro",
     "deleteBookConfirmTitle": "Excluir este livro?",
     "deleteBookConfirmDescription": "“{name}” será excluído permanentemente.",
-    "delete": "Excluir"
+    "delete": "Excluir",
+    "backToEvents": "Voltar aos eventos"
   },
   "BookDetail": {
     "backToEvent": "Voltar ao evento",
@@ -278,6 +281,44 @@
     "deleteConfirmTitle": "Excluir este livro?",
     "deleteConfirmDescription": "“{name}” será excluído permanentemente.",
     "keep": "Manter",
-    "delete": "Excluir"
+    "delete": "Excluir",
+    "unnamed": "Sem nome",
+    "notPriced": "Sem preço"
+  },
+  "AddBookDrawer": {
+    "addBook": "Adicionar livro",
+    "title": "Adicionar livros",
+    "description": "Escolha como deseja adicionar livros a este evento.",
+    "manual": "Manual",
+    "manualDescription": "Registre um livro preenchendo um formulário.",
+    "scan": "Escanear",
+    "manualFormDescription": "Informe pelo menos um nome ou ISBN, além do estado de conservação.",
+    "nameField": "Nome",
+    "namePlaceholder": "Nome do livro",
+    "isbnField": "ISBN",
+    "isbnPlaceholder": "ISBN do livro",
+    "conservationState": "Estado de conservação",
+    "conservationPlaceholder": "ex.: bom",
+    "nameOrIsbnRequired": "Informe pelo menos um nome ou ISBN.",
+    "cancel": "Cancelar",
+    "continue": "Continuar",
+    "confirmTitle": "Confirmar livro",
+    "confirmDescription": "Registrar “{name}” em estado “{state}”?",
+    "back": "Voltar",
+    "confirm": "Registrar",
+    "creating": "Criando...",
+    "scanDescription": "Registre um livro escaneando o código de barras.",
+    "scanHint": "Aponte a câmera para o código de barras do livro."
+  },
+  "BookScanner": {
+    "starting": "Iniciando câmera...",
+    "unsupported": "A leitura de código de barras não é suportada por este navegador. Você pode digitar o ISBN manualmente.",
+    "error": "Não foi possível acessar a câmera. Verifique as permissões ou digite o ISBN manualmente.",
+    "enterManually": "Digitar manualmente",
+    "hint": "Mantenha o código de barras dentro da moldura.",
+    "camera": "Câmera",
+    "cameraNumber": "Câmera {number}",
+    "cameraDefault": "Câmera padrão",
+    "setDefault": "Definir como padrão"
   }
 }

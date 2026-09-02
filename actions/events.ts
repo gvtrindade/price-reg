@@ -6,6 +6,12 @@ import { prisma } from "@/lib/prisma";
 import { headers } from "next/headers";
 import { getTranslations } from "next-intl/server";
 
+async function requireSession() {
+  const session = await auth.api.getSession({ headers: await headers() });
+  if (!session?.user) return null;
+  return session;
+}
+
 async function requireManager() {
   const session = await auth.api.getSession({ headers: await headers() });
   const roles = (session?.user.roles as string[] | undefined) ?? [];
@@ -99,6 +105,43 @@ function parseBookData(data: {
     out.status = status;
   }
   return { error: null, data: out };
+}
+
+export async function addBookAction(data: {
+  eventId: string;
+  title?: string;
+  isbn?: string;
+  conservationState: string;
+}) {
+  return Sentry.withServerActionInstrumentation("addBookAction", async () => {
+    const t = await getTranslations("Errors");
+    if (!(await requireSession())) return { error: t("sessionExpired") };
+
+    const title = data.title?.trim() || null;
+    const isbn = data.isbn?.trim() || null;
+    const conservationState = data.conservationState.trim();
+
+    if (!title && !isbn) return { error: t("bookNameOrIsbnRequired") };
+    if (!conservationState) return { error: t("invalidConservationState") };
+
+    const event = await prisma.event.findUnique({
+      where: { id: data.eventId },
+      select: { status: true },
+    });
+    if (!event || event.status !== "ACTIVE") return { error: t("eventNotFound") };
+
+    const book = await prisma.book.create({
+      data: {
+        title,
+        isbn,
+        conservationState,
+        status: "registered",
+        price: null,
+        eventId: data.eventId,
+      },
+    });
+    return { error: null, id: book.id };
+  });
 }
 
 export async function updateBookAction(data: {

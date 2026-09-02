@@ -42,7 +42,7 @@ export default async function EventDetailPage({
         status: event.status,
         books: event.books.map((book) => ({
           ...book,
-          price: String(book.price),
+          price: book.price === null ? null : String(book.price),
         })),
       }}
       isManager={isManager}

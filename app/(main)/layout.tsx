@@ -12,10 +12,5 @@ export default async function MainLayout({
   if (!session?.user) redirect("/login");
   if (session.user.mustChangePassword) redirect("/force-change-password");
 
-  return (
-    <div className="flex min-h-screen">
-      <Sidebar />
-      <div className="flex-1 overflow-auto">{children}</div>
-    </div>
-  );
+  return <Sidebar>{children}</Sidebar>;
 }

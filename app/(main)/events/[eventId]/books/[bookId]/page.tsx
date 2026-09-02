@@ -30,7 +30,7 @@ export default async function BookDetailPage({
         isbn: book.isbn,
         conservationState: book.conservationState,
         status: book.status,
-        price: String(book.price),
+        price: book.price === null ? null : String(book.price),
       }}
       eventId={book.event.id}
       eventActive={book.event.status === "ACTIVE"}

@@ -121,11 +121,11 @@ model EventUser {
 
 model Book {
   id                String   @id @default(cuid())
-  title             String
+  title             String?
   isbn              String?
   conservationState String   @map("conservation_state")
   status            String
-  price             Decimal  @default(0) @db.Decimal(10, 2)
+  price             Decimal? @db.Decimal(10, 2)
   priced            Boolean  @default(false)
   createdAt         DateTime @default(now()) @db.Timestamptz
   updatedAt         DateTime @updatedAt @db.Timestamptz

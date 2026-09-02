@@ -5,6 +5,7 @@ import {
   deleteBookAction,
   updateEventTitleAction,
 } from "@/actions/events";
+import { AddBookDrawer } from "@/components/add-book-drawer";
 import { InlineEdit } from "@/components/inline-edit";
 import {
   AlertDialog,
@@ -27,17 +28,17 @@ import {
 import { Input } from "@/components/ui/input";
 import { useTranslations } from "next-intl";
 import Link from "next/link";
-import { MoreHorizontal, Pencil, Trash2 } from "lucide-react";
+import { ArrowLeft, MoreHorizontal, Pencil, Trash2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
 interface BookRow {
   id: string;
-  title: string;
+  title: string | null;
   isbn: string | null;
   conservationState: string;
   status: string;
-  price: string;
+  price: string | null;
 }
 
 interface EventData {
@@ -65,7 +66,7 @@ export function EventDetail({
   const books = query
     ? event.books.filter(
         (book) =>
-          book.title.toLowerCase().includes(query) ||
+          (book.title ?? "").toLowerCase().includes(query) ||
           (book.isbn ?? "").toLowerCase().includes(query),
       )
     : event.books;
@@ -76,6 +77,16 @@ export function EventDetail({
 
   return (
     <main className="mx-auto max-w-3xl space-y-6 p-6">
+      <Button
+        variant="ghost"
+        size="sm"
+        className="-ml-2"
+        render={<Link href="/events" />}
+        nativeButton={false}
+      >
+        <ArrowLeft />
+        {t("backToEvents")}
+      </Button>
       <div className="flex items-center justify-between gap-2">
         <div className="flex min-w-0 items-center gap-2">
           {!isActive && (
@@ -180,13 +191,15 @@ export function EventDetail({
             {books.map((book) => (
               <li key={book.id} className="flex items-center gap-4 p-4">
                 <div className="min-w-0 flex-1">
-                  <p className="truncate font-medium">{book.title}</p>
+                  <p className="truncate font-medium">
+                    {book.title ?? book.isbn ?? "—"}
+                  </p>
                   <p className="text-sm text-muted-foreground">
                     {book.conservationState} · {book.status}
                   </p>
                 </div>
                 <span className="shrink-0 text-sm tabular-nums">
-                  {book.price}
+                  {book.price ?? "—"}
                 </span>
                 <div className="flex shrink-0 items-center gap-1">
                   <Button
@@ -220,7 +233,7 @@ export function EventDetail({
                           </AlertDialogTitle>
                           <AlertDialogDescription>
                             {t("deleteBookConfirmDescription", {
-                              name: book.title,
+                              name: book.title ?? book.isbn ?? "",
                             })}
                           </AlertDialogDescription>
                         </AlertDialogHeader>
@@ -247,6 +260,8 @@ export function EventDetail({
           </ul>
         )}
       </section>
+
+      {isActive && <AddBookDrawer eventId={event.id} />}
     </main>
   );
 }
