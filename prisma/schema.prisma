@@ -14,64 +14,115 @@ datasource db {
 
 // Better-auth
 
+enum Role {
+  VOLUNTEER
+  MANAGER
+  ADMIN
+
+  @@map("role")
+}
+
 model User {
   id            String   @id @default(cuid())
   name          String
   email         String   @unique
   emailVerified Boolean
   image         String?
-  roles         String[] @default([]) 
+  roles         Role[]   @default([VOLUNTEER])
   createdAt     DateTime @default(now()) @db.Timestamptz
   updatedAt     DateTime @updatedAt @db.Timestamptz
 
-  sessions          Session[]
-  accounts          Account[]
+  sessions   Session[]
+  accounts   Account[]
+  eventUsers EventUser[]
 
   @@map("user")
 }
 
 model Session {
-  id        String @id
+  id        String   @id
   expiresAt DateTime
-  token     String @unique
+  token     String   @unique
   ipAddress String?
   userAgent String?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  userId    String
-  user      User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("session")
 }
 
 model Account {
-  id                    String @id
+  id                    String    @id
   accountId             String
   providerId            String
-  accessToken           String? @db.Text
-  refreshToken          String? @db.Text
-  idToken               String? @db.Text
+  accessToken           String?   @db.Text
+  refreshToken          String?   @db.Text
+  idToken               String?   @db.Text
   accessTokenExpiresAt  DateTime?
   refreshTokenExpiresAt DateTime?
   scope                 String?
   password              String?
-  createdAt             DateTime @default(now())
-  updatedAt             DateTime @updatedAt
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
 
-  userId                String
-  user                  User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("account")
 }
 
 model Verification {
-  id         String @id
+  id         String   @id
   identifier String
-  value      String @db.Text
+  value      String   @db.Text
   expiresAt  DateTime
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
 
   @@map("verification")
+}
+
+// Domain
+
+model Event {
+  id        String   @id @default(cuid())
+  title     String
+  createdAt DateTime @default(now()) @db.Timestamptz
+  updatedAt DateTime @updatedAt @db.Timestamptz
+
+  books      Book[]
+  eventUsers EventUser[]
+
+  @@map("event")
+}
+
+model EventUser {
+  eventId String
+  userId  String
+
+  event Event @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([eventId, userId])
+  @@map("event_user")
+}
+
+model Book {
+  id                String   @id @default(cuid())
+  title             String
+  isbn              String?
+  conservationState String   @map("conservation_state")
+  status            String
+  price             Decimal  @default(0) @db.Decimal(10, 2)
+  priced            Boolean  @default(false)
+  createdAt         DateTime @default(now()) @db.Timestamptz
+  updatedAt         DateTime @updatedAt @db.Timestamptz
+
+  eventId String
+  event   Event  @relation(fields: [eventId], references: [id], onDelete: Cascade)
+
+  @@map("book")
 }
