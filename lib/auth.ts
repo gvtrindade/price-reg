@@ -23,6 +23,12 @@ export const auth = betterAuth({
         defaultValue: ["VOLUNTEER"],
         input: false,
       },
+      mustChangePassword: {
+        type: "boolean",
+        required: false,
+        defaultValue: false,
+        input: false,
+      },
     },
   },
   account: {

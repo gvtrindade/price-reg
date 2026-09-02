@@ -28,7 +28,8 @@
     "orContinueWith": "Ou continue com",
     "google": "Google",
     "noAccount": "Não tem uma conta?",
-    "signUpLink": "Cadastre-se"
+    "signUpLink": "Cadastre-se",
+    "passwordChanged": "Sua senha foi alterada. Entre com a sua nova senha."
   },
   "Register": {
     "title": "Criar conta",
@@ -84,6 +85,13 @@
   "Protected": {
     "title": "Esta página é protegida"
   },
+  "Events": {
+    "activeTitle": "Eventos ativos",
+    "inactiveTitle": "Eventos inativos",
+    "noActiveEvents": "Nenhum evento ativo.",
+    "noInactiveEvents": "Nenhum evento inativo.",
+    "bookCount": "{count, plural, =0 {Nenhum livro} one {# livro} other {# livros}}"
+  },
   "LogoutButton": {
     "label": "Sair"
   },
@@ -112,7 +120,22 @@
   "Errors": {
     "invalidCredentials": "Email ou senha inválidos",
     "signUpFailed": "Falha ao criar conta",
-    "invalidResetToken": "Token de reset inválido ou expirado"
+    "invalidResetToken": "Token de reset inválido ou expirado",
+    "changePasswordFailed": "Falha ao alterar a senha",
+    "notAdmin": "Você não tem permissão para executar esta ação",
+    "userNotFound": "Usuário não encontrado",
+    "invalidRole": "Cargo inválido",
+    "invalidEmail": "Digite um email válido",
+    "emailInUse": "Este email já está em uso",
+    "cannotRemoveOwnAdminRole": "Você não pode remover seu próprio cargo de admin",
+    "notManager": "Você não tem permissão para executar esta ação",
+    "eventNameRequired": "O nome do evento é obrigatório",
+    "eventNotFound": "Evento não encontrado",
+    "bookNotFound": "Livro não encontrado",
+    "invalidTitle": "O nome do livro é obrigatório",
+    "invalidPrice": "Digite um preço válido",
+    "invalidConservationState": "O estado de conservação é obrigatório",
+    "invalidStatus": "O status é obrigatório"
   },
   "Emails": {
     "resetPassword": {
@@ -134,6 +157,127 @@
       "ignoreNote": "Se você não criou uma conta, pode ignorar este email com segurança.",
       "expiryNote": "Este link expira em 1 hora.",
       "fallbackNote": "Se o botão acima não funcionar, copie e cole este link no seu navegador:"
+    },
+    "temporaryPassword": {
+      "heading": "Redefinição de senha",
+      "subject": "Sua senha temporária",
+      "intro": "Olá {name}, um administrador redefiniu a sua senha.",
+      "instructions": "Use a senha temporária abaixo para entrar:",
+      "warning": "Por motivos de segurança, será solicitado que você escolha uma nova senha no próximo login. Se você não solicitou isso, contate um administrador."
     }
+  },
+  "Sidebar": {
+    "events": "Eventos",
+    "settings": "Configurações",
+    "logout": "Sair",
+    "collapse": "Recolher menu lateral",
+    "expand": "Expandir menu lateral"
+  },
+  "Settings": {
+    "title": "Configurações",
+    "description": "Os dados da sua conta",
+    "nameLabel": "Nome",
+    "emailLabel": "Email",
+    "changePassword": "Alterar senha",
+    "profile": "Meus Dados",
+    "users": "Gerenciar usuários"
+  },
+  "ChangePassword": {
+    "title": "Alterar senha",
+    "description": "Digite sua senha atual e escolha uma nova",
+    "currentPasswordLabel": "Senha atual *",
+    "currentPasswordPlaceholder": "Digite sua senha atual",
+    "newPasswordLabel": "Nova senha *",
+    "newPasswordPlaceholder": "Crie uma nova senha",
+    "confirmPasswordLabel": "Confirmar nova senha *",
+    "confirmPasswordPlaceholder": "Confirme sua nova senha",
+    "submit": "Alterar senha",
+    "submitting": "Alterando...",
+    "backToSettings": "Voltar para configurações",
+    "signOut": "Encerrar sessão"
+  },
+  "UserTable": {
+    "title": "Gerenciar usuários",
+    "description": "Clique em um usuário para ver e editar seus detalhes",
+    "name": "Nome",
+    "email": "Email",
+    "roles": "Cargos",
+    "you": "(você)",
+    "addRole": "Adicionar cargo",
+    "removeRole": "Remover cargo",
+    "empty": "Nenhum usuário encontrado.",
+    "role": {
+      "VOLUNTEER": "Voluntário",
+      "MANAGER": "Gestor",
+      "ADMIN": "Admin"
+    }
+  },
+  "UserDetail": {
+    "memberSince": "Usuário desde {date}",
+    "roles": "Cargos",
+    "emailCardTitle": "Email",
+    "emailLabel": "Novo email",
+    "emailUpdated": "Email atualizado.",
+    "save": "Salvar",
+    "saving": "Salvando...",
+    "passwordCardTitle": "Senha",
+    "passwordCardDescription": "Gera uma senha temporária, envia para o email do usuário e força a troca da senha no próximo login. Todas as sessões ativas do usuário são encerradas.",
+    "resetPassword": "Redefinir senha",
+    "resetting": "Enviando...",
+    "passwordSent": "Senha temporária enviada para o email do usuário."
+  },
+  "ForceChangePassword": {
+    "notice": "Sua senha foi redefinida por um administrador. Escolha uma nova senha para continuar."
+  },
+  "InlineEdit": {
+    "edit": "Clique para editar"
+  },
+  "CreateEventDialog": {
+    "addEvent": "Adicionar evento",
+    "title": "Novo evento",
+    "description": "Digite um nome para o novo evento.",
+    "nameLabel": "Nome *",
+    "namePlaceholder": "Nome do evento",
+    "nameRequired": "Digite um nome para o evento.",
+    "cancel": "Cancelar",
+    "continue": "Continuar",
+    "confirmTitle": "Confirmar nome do evento",
+    "confirmDescription": "Criar um evento chamado “{name}”?",
+    "back": "Voltar",
+    "confirm": "Criar evento",
+    "creating": "Criando..."
+  },
+  "EventDetail": {
+    "nameField": "Nome do evento",
+    "actions": "Ações do evento",
+    "cancelEvent": "Cancelar evento",
+    "cancelEventConfirmTitle": "Cancelar este evento?",
+    "cancelEventConfirmDescription": "O evento “{name}” será movido para a lista de inativos.",
+    "keep": "Manter evento",
+    "cancelled": "Cancelado",
+    "books": "Livros",
+    "bookCount": "{count, plural, =0 {Nenhum livro} one {# livro} other {# livros}}",
+    "searchPlaceholder": "Buscar por nome ou ISBN",
+    "noBooks": "Nenhum livro neste evento ainda.",
+    "noResults": "Nenhum livro corresponde à sua busca.",
+    "openBook": "Abrir livro",
+    "deleteBook": "Excluir livro",
+    "deleteBookConfirmTitle": "Excluir este livro?",
+    "deleteBookConfirmDescription": "“{name}” será excluído permanentemente.",
+    "delete": "Excluir"
+  },
+  "BookDetail": {
+    "backToEvent": "Voltar ao evento",
+    "title": "Nome",
+    "isbn": "ISBN",
+    "price": "Preço",
+    "conservationState": "Estado de conservação",
+    "status": "Status",
+    "actions": "Ações do livro",
+    "deleteBook": "Excluir livro",
+    "deleteConfirmTitle": "Excluir este livro?",
+    "deleteConfirmDescription": "“{name}” será excluído permanentemente.",
+    "keep": "Manter",
+    "delete": "Excluir"
   }
 }

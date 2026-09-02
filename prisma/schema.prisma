@@ -29,6 +29,7 @@ model User {
   emailVerified Boolean
   image         String?
   roles         Role[]   @default([VOLUNTEER])
+  mustChangePassword Boolean @default(false) @map("must_change_password")
   createdAt     DateTime @default(now()) @db.Timestamptz
   updatedAt     DateTime @updatedAt @db.Timestamptz
 
@@ -87,11 +88,19 @@ model Verification {
 
 // Domain
 
+enum EventStatus {
+  ACTIVE
+  INACTIVE
+
+  @@map("event_status")
+}
+
 model Event {
-  id        String   @id @default(cuid())
+  id        String      @id @default(cuid())
   title     String
-  createdAt DateTime @default(now()) @db.Timestamptz
-  updatedAt DateTime @updatedAt @db.Timestamptz
+  status    EventStatus @default(ACTIVE)
+  createdAt DateTime    @default(now()) @db.Timestamptz
+  updatedAt DateTime    @updatedAt @db.Timestamptz
 
   books      Book[]
   eventUsers EventUser[]

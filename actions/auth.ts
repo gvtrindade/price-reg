@@ -71,3 +71,33 @@ export async function resetPasswordAction(data: {
     }
   })
 }
+
+export async function changePasswordAction(data: {
+  currentPassword: string
+  newPassword: string
+}) {
+  return Sentry.withServerActionInstrumentation("changePasswordAction", async () => {
+    const t = await getTranslations("Errors")
+    try {
+      const session = await auth.api.getSession({ headers: await headers() })
+      await auth.api.changePassword({
+        headers: await headers(),
+        body: {
+          currentPassword: data.currentPassword,
+          newPassword: data.newPassword,
+        },
+      })
+      if (session?.user.id) {
+        const { prisma } = await import("@/lib/prisma")
+        await prisma.user.update({
+          where: { id: session.user.id },
+          data: { mustChangePassword: false },
+        })
+      }
+      return { success: true }
+    } catch (error) {
+      const err = error as { body?: { message?: string } }
+      return { error: err?.body?.message ?? t("changePasswordFailed") }
+    }
+  })
+}

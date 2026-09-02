@@ -12,15 +12,25 @@ import {
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { authClient } from "@/lib/auth-client"
-import { useRouter } from "next/navigation"
+import { useRouter, useSearchParams } from "next/navigation"
 import { useTranslations } from "next-intl"
-import { useState } from "react"
+import { Suspense, useState } from "react"
 import { useForm } from "react-hook-form"
 
 export default function LoginPage() {
+  return (
+    <Suspense>
+      <LoginForm />
+    </Suspense>
+  )
+}
+
+function LoginForm() {
   const t = useTranslations("Login")
   const tv = useTranslations("Validation")
   const router = useRouter()
+  const searchParams = useSearchParams()
+  const passwordChanged = searchParams.get("password-changed") === "true"
   const [isPending, setIsPending] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [emailNotVerified, setEmailNotVerified] = useState(false)
@@ -82,6 +92,11 @@ export default function LoginPage() {
         </CardDescription>
       </CardHeader>
       <CardContent>
+        {passwordChanged && (
+          <p className="mb-4 rounded-lg border border-green-600/30 bg-green-600/10 p-3 text-center text-sm text-green-600">
+            {t("passwordChanged")}
+          </p>
+        )}
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
           <div className="space-y-2">
             <Label htmlFor="email">{t("emailLabel")}</Label>

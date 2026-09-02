@@ -7,6 +7,9 @@
 -- CreateEnum
 CREATE TYPE "role" AS ENUM ('VOLUNTEER', 'MANAGER', 'ADMIN');
 
+-- CreateEnum
+CREATE TYPE "event_status" AS ENUM ('ACTIVE', 'INACTIVE');
+
 -- AlterTable
 ALTER TABLE "user" DROP COLUMN "roles",
 ADD COLUMN     "roles" "role"[] DEFAULT ARRAY['VOLUNTEER']::"role"[];
@@ -15,6 +18,7 @@ ADD COLUMN     "roles" "role"[] DEFAULT ARRAY['VOLUNTEER']::"role"[];
 CREATE TABLE "event" (
     "id" TEXT NOT NULL,
     "title" TEXT NOT NULL,
+    "status" "event_status" NOT NULL DEFAULT 'ACTIVE',
     "createdAt" TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMPTZ NOT NULL,
 
