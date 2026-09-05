@@ -1,4 +1,5 @@
 import { cn } from "@/lib/utils";
+import { Toaster } from "@/components/toast";
 import { SerwistProvider } from "@serwist/turbopack/react";
 import type { Metadata } from "next";
 import { NextIntlClientProvider } from "next-intl";
@@ -92,6 +93,7 @@ export default async function RootLayout({
         <SerwistProvider swUrl="/serwist/sw.js">
           <NextIntlClientProvider>{children}</NextIntlClientProvider>
         </SerwistProvider>
+        <Toaster />
       </body>
     </html>
   );

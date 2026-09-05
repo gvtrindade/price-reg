@@ -122,6 +122,7 @@ model EventUser {
 model Book {
   id                String   @id @default(cuid())
   title             String?
+  author            String?
   isbn              String?
   conservationState String   @map("conservation_state")
   status            String

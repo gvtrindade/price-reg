@@ -3,6 +3,7 @@
 import * as Sentry from "@sentry/nextjs";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { webhookToken } from "@/lib/webhook-token";
 import { headers } from "next/headers";
 import { getTranslations } from "next-intl/server";
 
@@ -64,18 +65,21 @@ export async function cancelEventAction(data: { eventId: string }) {
 
 type BookFieldError =
   | "invalidTitle"
+  | "invalidAuthor"
   | "invalidPrice"
   | "invalidConservationState"
   | "invalidStatus";
 
 function parseBookData(data: {
   title?: string;
+  author?: string;
   price?: string;
   conservationState?: string;
   status?: string;
 }) {
   const out: {
     title?: string;
+    author?: string;
     price?: number;
     priced?: boolean;
     conservationState?: string;
@@ -86,6 +90,11 @@ function parseBookData(data: {
     const title = data.title.trim();
     if (!title) return { error: "invalidTitle" as BookFieldError };
     out.title = title;
+  }
+  if (data.author !== undefined) {
+    const author = data.author.trim();
+    if (!author) return { error: "invalidAuthor" as BookFieldError };
+    out.author = author;
   }
   if (data.price !== undefined) {
     const price = Number(data.price.replace(",", "."));
@@ -110,6 +119,7 @@ function parseBookData(data: {
 export async function addBookAction(data: {
   eventId: string;
   title?: string;
+  author?: string;
   isbn?: string;
   conservationState: string;
 }) {
@@ -118,10 +128,12 @@ export async function addBookAction(data: {
     if (!(await requireSession())) return { error: t("sessionExpired") };
 
     const title = data.title?.trim() || null;
+    const author = data.author?.trim() || null;
     const isbn = data.isbn?.trim() || null;
     const conservationState = data.conservationState.trim();
 
-    if (!title && !isbn) return { error: t("bookNameOrIsbnRequired") };
+    if (!isbn && !(title && author))
+      return { error: t("bookNameOrIsbnRequired") };
     if (!conservationState) return { error: t("invalidConservationState") };
 
     const event = await prisma.event.findUnique({
@@ -130,23 +142,86 @@ export async function addBookAction(data: {
     });
     if (!event || event.status !== "ACTIVE") return { error: t("eventNotFound") };
 
-    const book = await prisma.book.create({
-      data: {
+    const serviceUrl = process.env.BOOK_PRICE_FINDER_URL;
+    const webhookBase =
+      process.env.BOOK_WEBHOOK_BASE_URL ?? process.env.APPLICATION_URL;
+    if (!serviceUrl || !webhookBase)
+      return { error: t("priceFinderNotConfigured") };
+
+    const bookId = crypto.randomUUID();
+    const webhookUrl = new URL("/api/webhooks/book-valuation", webhookBase);
+    webhookUrl.searchParams.set("bookId", bookId);
+    webhookUrl.searchParams.set("eventId", data.eventId);
+    webhookUrl.searchParams.set("token", webhookToken(bookId, data.eventId));
+
+    let lookup: Response;
+    try {
+      lookup = await fetch(new URL("/lookup", serviceUrl), {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        cache: "no-store",
+        body: JSON.stringify({
+          ...(isbn ? { isbn } : {}),
+          ...(title ? { title } : {}),
+          ...(author ? { author } : {}),
+          conservation_state: conservationState,
+          webhook_url: webhookUrl.toString(),
+        }),
+      });
+    } catch {
+      return { error: t("priceFinderUnreachable") };
+    }
+
+    if (!lookup.ok) {
+      const detail = await readLookupError(lookup);
+      return { error: detail || t("priceFinderRejected") };
+    }
+
+    // The service delivers its webhook while this request is still in flight,
+    // so the row may already exist (created by the webhook); never clobber it.
+    await prisma.book.upsert({
+      where: { id: bookId },
+      create: {
+        id: bookId,
+        eventId: data.eventId,
         title,
+        author,
         isbn,
         conservationState,
         status: "registered",
-        price: null,
-        eventId: data.eventId,
       },
+      update: {},
     });
-    return { error: null, id: book.id };
+    return { error: null, id: bookId };
   });
+}
+
+async function readLookupError(response: Response): Promise<string | null> {
+  let body: unknown;
+  try {
+    body = await response.json();
+  } catch {
+    return null;
+  }
+  const detail = (body as { detail?: unknown } | null)?.detail;
+  if (typeof detail === "string") return detail;
+  if (Array.isArray(detail)) {
+    const messages = detail
+      .map((item) => {
+        const msg = (item as { msg?: unknown })?.msg;
+        return typeof msg === "string" ? msg.replace(/^Value error,\s*/, "") : null;
+      })
+      .filter(Boolean);
+    if (messages.length) return messages.join("; ");
+  }
+  const error = (body as { error?: unknown } | null)?.error;
+  return typeof error === "string" ? error : null;
 }
 
 export async function updateBookAction(data: {
   bookId: string;
   title?: string;
+  author?: string;
   price?: string;
   conservationState?: string;
   status?: string;

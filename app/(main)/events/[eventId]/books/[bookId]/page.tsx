@@ -27,6 +27,7 @@ export default async function BookDetailPage({
       book={{
         id: book.id,
         title: book.title,
+        author: book.author,
         isbn: book.isbn,
         conservationState: book.conservationState,
         status: book.status,

@@ -29,6 +29,7 @@ import { useState } from "react";
 interface BookData {
   id: string;
   title: string | null;
+  author: string | null;
   isbn: string | null;
   conservationState: string;
   status: string;
@@ -78,7 +79,7 @@ export function BookDetail({
         </Button>
       </div>
 
-      <div className="flex items-center gap-2">
+      <div className="flex items-center justify-between gap-2">
         <h1 className="min-w-0 flex-1">
           <InlineEdit
             value={book.title ?? ""}
@@ -115,6 +116,13 @@ export function BookDetail({
         <Field label={t("isbn")}>
           <span className="text-sm tabular-nums">
             {book.isbn || <span className="text-muted-foreground">—</span>}
+          </span>
+        </Field>
+        <Field label={t("author")}>
+          <span className="text-sm">
+            {book.author || (
+              <span className="text-muted-foreground">{t("unknownAuthor")}</span>
+            )}
           </span>
         </Field>
         <Field label={t("price")}>
