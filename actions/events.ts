@@ -142,9 +142,8 @@ export async function addBookAction(data: {
     });
     if (!event || event.status !== "ACTIVE") return { error: t("eventNotFound") };
 
-    const serviceUrl = process.env.BOOK_PRICE_FINDER_URL;
-    const webhookBase =
-      process.env.BOOK_WEBHOOK_BASE_URL ?? process.env.APPLICATION_URL;
+    const serviceUrl = process.env.NEXT_BOOK_PRICE_FINDER_URL;
+    const webhookBase = process.env.NEXT_APPLICATION_URL;
     if (!serviceUrl || !webhookBase)
       return { error: t("priceFinderNotConfigured") };
 
