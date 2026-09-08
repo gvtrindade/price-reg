@@ -30,7 +30,7 @@ ENV NEXT_APPLICATION_URL=${NEXT_APPLICATION_URL:-http://localhost:3000} \
     SENTRY_DSN=${SENTRY_DSN:-} \
     SENTRY_AUTH_TOKEN=${SENTRY_AUTH_TOKEN:-} \
     VERSION=${VERSION:-} \
-    NEXT_BOOK_PRICE_FINDER_URL=${NEXT_BOOK_PRICE_FINDER_URL:http://localhost:8000}
+    NEXT_BOOK_PRICE_FINDER_URL=${NEXT_BOOK_PRICE_FINDER_URL:-http://localhost:8000}
 
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
