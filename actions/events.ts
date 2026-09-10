@@ -132,8 +132,8 @@ export async function addBookAction(data: {
     const isbn = data.isbn?.trim() || null;
     const conservationState = data.conservationState.trim();
 
-    if (!isbn && !(title && author))
-      return { error: t("bookNameOrIsbnRequired") };
+    if (!isbn && !title) return { error: t("bookNameOrIsbnRequired") };
+    if (title && !author) return { error: t("invalidAuthor") };
     if (!conservationState) return { error: t("invalidConservationState") };
 
     const event = await prisma.event.findUnique({

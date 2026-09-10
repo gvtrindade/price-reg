@@ -103,13 +103,19 @@ export async function POST(request: NextRequest) {
     if (errorMessage) {
       console.error(`Book valuation error for ${bookId}: ${errorMessage}`);
     }
-  } else if (estimatedValue !== null) {
-    data.price = estimatedValue;
-    data.priced = true;
+  } else {
+    if (estimatedValue !== null) {
+      data.price = estimatedValue;
+      data.priced = true;
+    }
+    // A valuation that succeeded after a previous error must clear the error status.
+    if (target.status === "error") {
+      data.status = "registered";
+    }
   }
-  if (title && !target.title) data.title = title;
-  if (author && !target.author) data.author = author;
-  if (isbn && !target.isbn) data.isbn = isbn;
+  if (title && title !== target.title) data.title = title;
+  if (author && author !== target.author) data.author = author;
+  if (isbn && isbn !== target.isbn) data.isbn = isbn;
 
   if (Object.keys(data).length > 0) {
     await prisma.book.update({ where: { id: bookId }, data });

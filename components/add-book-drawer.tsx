@@ -34,6 +34,7 @@ export function AddBookDrawer({ eventId }: { eventId: string }) {
   const [open, setOpen] = useState(false);
   const [step, setStep] = useState<Step>("options");
   const [title, setTitle] = useState("");
+  const [author, setAuthor] = useState("");
   const [isbn, setIsbn] = useState("");
   const [conservationState, setConservationState] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -43,6 +44,7 @@ export function AddBookDrawer({ eventId }: { eventId: string }) {
     setOpen(false);
     setStep("options");
     setTitle("");
+    setAuthor("");
     setIsbn("");
     setConservationState("");
     setError(null);
@@ -50,8 +52,14 @@ export function AddBookDrawer({ eventId }: { eventId: string }) {
   }
 
   function requestSubmit() {
-    if (!title.trim() && !isbn.trim()) {
+    const hasTitle = !!title.trim();
+    const hasIsbn = !!isbn.trim();
+    if (!hasTitle && !hasIsbn) {
       setError(t("nameOrIsbnRequired"));
+      return;
+    }
+    if (hasTitle && !author.trim()) {
+      setError(t("authorRequired"));
       return;
     }
     if (!conservationState.trim()) {
@@ -65,7 +73,13 @@ export function AddBookDrawer({ eventId }: { eventId: string }) {
   async function confirm() {
     setPending(true);
     setError(null);
-    const res = await addBookAction({ eventId, title, isbn, conservationState });
+    const res = await addBookAction({
+      eventId,
+      title,
+      author,
+      isbn,
+      conservationState,
+    });
     setPending(false);
     if (res?.error) {
       setError(res.error);
@@ -170,6 +184,19 @@ export function AddBookDrawer({ eventId }: { eventId: string }) {
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
                   placeholder={t("namePlaceholder")}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="book-author">
+                  {t("authorField")}
+                  {title.trim() ? " *" : ""}
+                </Label>
+                <Input
+                  id="book-author"
+                  value={author}
+                  onChange={(e) => setAuthor(e.target.value)}
+                  placeholder={t("authorPlaceholder")}
+                  aria-invalid={!!error}
                 />
               </div>
               <div className="space-y-2">
