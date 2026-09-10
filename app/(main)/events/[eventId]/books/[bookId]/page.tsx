@@ -22,6 +22,10 @@ export default async function BookDetailPage({
   });
   if (!book) redirect(`/events/${eventId}`);
 
+  const fiveMinutesAgo = new Date(new Date().getTime() - 5 * 60 * 1000);
+  const canReprocess =
+    (book.status === "registered" || book.status === "error") && book.createdAt <= fiveMinutesAgo;
+
   return (
     <BookDetail
       book={{
@@ -36,6 +40,7 @@ export default async function BookDetailPage({
       eventId={book.event.id}
       eventActive={book.event.status === "ACTIVE"}
       isManager={isManager}
+      canReprocess={canReprocess}
     />
   );
 }

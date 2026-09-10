@@ -1,4 +1,10 @@
 {
+  "ConservationState": {
+    "asNew": "As New",
+    "nearFine": "Near Fine (FN)",
+    "good": "Good (G)",
+    "fair": "Fair"
+  },
   "HomePage": {
     "title": "Hello world!"
   },
@@ -171,7 +177,9 @@
     "bookNameOrIsbnRequired": "Enter an ISBN, or both the name and the author, for the book",
     "priceFinderNotConfigured": "The price service is not configured.",
     "priceFinderUnreachable": "The price service is unreachable. Please try again.",
-    "priceFinderRejected": "The price service rejected this book."
+    "priceFinderRejected": "The price service rejected this book.",
+    "bookNotRegistered": "This book cannot be reprocessed.",
+    "bookTooRecent": "Please wait at least 5 minutes before reprocessing."
   },
   "Emails": {
     "resetPassword": {
@@ -289,7 +297,9 @@
     "keep": "Keep",
     "delete": "Delete",
     "unnamed": "Unnamed",
-    "notPriced": "Not priced"
+    "notPriced": "Not priced",
+    "reprocess": "Reprocess price",
+    "reprocessing": "Reprocessing..."
   },
   "AddBookDrawer": {
     "addBook": "Add book",
@@ -306,7 +316,7 @@
     "isbnField": "ISBN",
     "isbnPlaceholder": "Book ISBN",
     "conservationState": "Conservation state",
-    "conservationPlaceholder": "e.g. good",
+    "selectConservation": "Select conservation state",
     "nameOrIsbnRequired": "Enter an ISBN, or the name and the author.",
     "cancel": "Cancel",
     "continue": "Continue",

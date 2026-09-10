@@ -243,6 +243,58 @@ export async function updateBookAction(data: {
   });
 }
 
+export async function reprocessBookAction(data: { bookId: string }) {
+  return Sentry.withServerActionInstrumentation("reprocessBookAction", async () => {
+    const t = await getTranslations("Errors");
+    if (!(await requireManager())) return { error: t("notManager") };
+
+    const book = await prisma.book.findUnique({
+      where: { id: data.bookId },
+      include: { event: { select: { id: true, status: true } } },
+    });
+    if (!book || book.event.status !== "ACTIVE") return { error: t("bookNotFound") };
+    if (book.status !== "registered" && book.status !== "error") return { error: t("bookNotRegistered") };
+
+    const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000);
+    if (book.createdAt > fiveMinutesAgo) return { error: t("bookTooRecent") };
+
+    const serviceUrl = process.env.NEXT_BOOK_PRICE_FINDER_URL;
+    const webhookBase = process.env.NEXT_APPLICATION_URL;
+    if (!serviceUrl || !webhookBase)
+      return { error: t("priceFinderNotConfigured") };
+
+    const webhookUrl = new URL("/api/webhooks/book-valuation", webhookBase);
+    webhookUrl.searchParams.set("bookId", book.id);
+    webhookUrl.searchParams.set("eventId", book.eventId);
+    webhookUrl.searchParams.set("token", webhookToken(book.id, book.eventId));
+
+    let lookup: Response;
+    try {
+      lookup = await fetch(new URL("/lookup", serviceUrl), {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        cache: "no-store",
+        body: JSON.stringify({
+          ...(book.isbn ? { isbn: book.isbn } : {}),
+          ...(book.title ? { title: book.title } : {}),
+          ...(book.author ? { author: book.author } : {}),
+          conservation_state: book.conservationState,
+          webhook_url: webhookUrl.toString(),
+        }),
+      });
+    } catch {
+      return { error: t("priceFinderUnreachable") };
+    }
+
+    if (!lookup.ok) {
+      const detail = await readLookupError(lookup);
+      return { error: detail || t("priceFinderRejected") };
+    }
+
+    return { error: null };
+  });
+}
+
 export async function deleteBookAction(data: { bookId: string }) {
   return Sentry.withServerActionInstrumentation("deleteBookAction", async () => {
     const t = await getTranslations("Errors");

@@ -15,6 +15,7 @@ interface InlineEditProps {
   placeholder?: string;
   error?: string | null;
   onError?: (error: string | null) => void;
+  options?: readonly { value: string; label: string }[];
 }
 
 export function InlineEdit({
@@ -28,6 +29,7 @@ export function InlineEdit({
   placeholder,
   error,
   onError,
+  options,
 }: InlineEditProps) {
   const t = useTranslations("InlineEdit");
   const [editing, setEditing] = useState(false);
@@ -78,28 +80,54 @@ export function InlineEdit({
   if (editing) {
     return (
       <span className="inline-flex flex-col gap-1">
-        <input
-          ref={inputRef}
-          aria-label={label}
-          value={draft}
-          inputMode={inputMode}
-          disabled={saving}
-          onChange={(e) => setDraft(e.target.value)}
-          onBlur={save}
-          onKeyDown={(e) => {
-            if (e.key === "Enter") {
-              e.preventDefault();
-              void save();
-            } else if (e.key === "Escape") {
-              e.preventDefault();
-              cancel();
-            }
-          }}
-          className={cn(
-            "w-full max-w-xs rounded-md border border-input bg-transparent px-2 py-1 text-inherit font-inherit outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:opacity-50",
-            inputClassName,
-          )}
-        />
+        {options ? (
+          <select
+            aria-label={label}
+            value={draft}
+            disabled={saving}
+            onChange={(e) => setDraft(e.target.value)}
+            onBlur={save}
+            onKeyDown={(e) => {
+              if (e.key === "Escape") {
+                e.preventDefault();
+                cancel();
+              }
+            }}
+            className={cn(
+              "w-full max-w-xs rounded-md border border-input bg-transparent px-2 py-1 text-inherit font-inherit outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:opacity-50",
+              inputClassName,
+            )}
+          >
+            {options.map((opt) => (
+              <option key={opt.value} value={opt.value}>
+                {opt.label}
+              </option>
+            ))}
+          </select>
+        ) : (
+          <input
+            ref={inputRef}
+            aria-label={label}
+            value={draft}
+            inputMode={inputMode}
+            disabled={saving}
+            onChange={(e) => setDraft(e.target.value)}
+            onBlur={save}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") {
+                e.preventDefault();
+                void save();
+              } else if (e.key === "Escape") {
+                e.preventDefault();
+                cancel();
+              }
+            }}
+            className={cn(
+              "w-full max-w-xs rounded-md border border-input bg-transparent px-2 py-1 text-inherit font-inherit outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:opacity-50",
+              inputClassName,
+            )}
+          />
+        )}
         {error && <span className="text-xs text-destructive">{error}</span>}
       </span>
     );

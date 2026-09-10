@@ -12,6 +12,13 @@ import {
 } from "@/components/ui/drawer";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+
+const CONSERVATION_OPTIONS = [
+  { value: "As New", labelKey: "asNew" },
+  { value: "Near Fine (FN)", labelKey: "nearFine" },
+  { value: "Good (G)", labelKey: "good" },
+  { value: "Fair", labelKey: "fair" },
+] as const;
 import { BookScanner } from "@/components/book-scanner";
 import { Hand, Plus, ScanLine } from "lucide-react";
 import { useTranslations } from "next-intl";
@@ -22,6 +29,7 @@ type Step = "options" | "manual" | "scan" | "confirm";
 
 export function AddBookDrawer({ eventId }: { eventId: string }) {
   const t = useTranslations("AddBookDrawer");
+  const tState = useTranslations("ConservationState");
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [step, setStep] = useState<Step>("options");
@@ -178,13 +186,22 @@ export function AddBookDrawer({ eventId }: { eventId: string }) {
                 <Label htmlFor="book-conservation">
                   {t("conservationState")} *
                 </Label>
-                <Input
+                <select
                   id="book-conservation"
                   value={conservationState}
                   onChange={(e) => setConservationState(e.target.value)}
-                  placeholder={t("conservationPlaceholder")}
                   aria-invalid={!!error}
-                />
+                  className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-xs outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
+                >
+                  <option value="" disabled>
+                    {t("selectConservation")}
+                  </option>
+                  {CONSERVATION_OPTIONS.map((opt) => (
+                    <option key={opt.value} value={opt.value}>
+                      {tState(opt.labelKey as "asNew" | "nearFine" | "good" | "fair")}
+                    </option>
+                  ))}
+                </select>
               </div>
               {error && <p className="text-sm text-destructive">{error}</p>}
             </div>

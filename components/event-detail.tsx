@@ -48,6 +48,13 @@ interface EventData {
   books: BookRow[];
 }
 
+const CONSERVATION_LABELS: Record<string, string> = {
+  "As New": "asNew",
+  "Near Fine (FN)": "nearFine",
+  "Good (G)": "good",
+  Fair: "fair",
+};
+
 export function EventDetail({
   event,
   isManager,
@@ -56,6 +63,7 @@ export function EventDetail({
   isManager: boolean;
 }) {
   const t = useTranslations("EventDetail");
+  const tState = useTranslations("ConservationState");
   const router = useRouter();
   const [search, setSearch] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -195,7 +203,7 @@ export function EventDetail({
                     {book.title ?? book.isbn ?? "—"}
                   </p>
                   <p className="text-sm text-muted-foreground">
-                    {book.conservationState} · {book.status}
+                    {tState((CONSERVATION_LABELS[book.conservationState] ?? book.conservationState) as "asNew" | "nearFine" | "good" | "fair")} · {book.status}
                   </p>
                 </div>
                 <span className="shrink-0 text-sm tabular-nums">

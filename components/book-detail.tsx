@@ -1,6 +1,6 @@
 "use client";
 
-import { deleteBookAction, updateBookAction } from "@/actions/events";
+import { deleteBookAction, reprocessBookAction, updateBookAction } from "@/actions/events";
 import { InlineEdit } from "@/components/inline-edit";
 import {
   AlertDialog,
@@ -20,11 +20,18 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
-import { ArrowLeft, MoreHorizontal } from "lucide-react";
+import { ArrowLeft, MoreHorizontal, RefreshCw } from "lucide-react";
 import { useTranslations } from "next-intl";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+
+const CONSERVATION_OPTIONS = [
+  { value: "As New", labelKey: "asNew" },
+  { value: "Near Fine (FN)", labelKey: "nearFine" },
+  { value: "Good (G)", labelKey: "good" },
+  { value: "Fair", labelKey: "fair" },
+] as const;
 
 interface BookData {
   id: string;
@@ -41,16 +48,20 @@ export function BookDetail({
   eventId,
   eventActive,
   isManager,
+  canReprocess,
 }: {
   book: BookData;
   eventId: string;
   eventActive: boolean;
   isManager: boolean;
+  canReprocess: boolean;
 }) {
   const t = useTranslations("BookDetail");
+  const tState = useTranslations("ConservationState");
   const router = useRouter();
   const [error, setError] = useState<string | null>(null);
   const [deleteOpen, setDeleteOpen] = useState(false);
+  const [reprocessing, setReprocessing] = useState(false);
 
   const canEdit = isManager && eventActive;
 
@@ -102,6 +113,22 @@ export function BookDetail({
               <MoreHorizontal />
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
+              {canReprocess && (
+                <DropdownMenuItem
+                  disabled={reprocessing}
+                  onClick={async () => {
+                    setError(null);
+                    setReprocessing(true);
+                    const res = await reprocessBookAction({ bookId: book.id });
+                    setReprocessing(false);
+                    if (res?.error) setError(res.error);
+                    else router.refresh();
+                  }}
+                >
+                  <RefreshCw className={reprocessing ? "animate-spin" : ""} />
+                  {reprocessing ? t("reprocessing") : t("reprocess")}
+                </DropdownMenuItem>
+              )}
               <DropdownMenuItem onClick={() => setDeleteOpen(true)}>
                 {t("deleteBook")}
               </DropdownMenuItem>
@@ -143,6 +170,10 @@ export function BookDetail({
             label={t("conservationState")}
             onSave={save("conservationState")}
             onError={setError}
+            options={CONSERVATION_OPTIONS.map((o) => ({
+              value: o.value,
+              label: tState(o.labelKey as "asNew" | "nearFine" | "good" | "fair"),
+            }))}
           />
         </Field>
         <Field label={t("status")}>

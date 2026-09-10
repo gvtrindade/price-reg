@@ -10,6 +10,8 @@ interface ValuationPayload {
   isbn?: unknown;
   conservation_state?: unknown;
   estimated_value?: unknown;
+  status?: unknown;
+  error?: unknown;
 }
 
 function cleanText(value: unknown): string | null {
@@ -51,13 +53,16 @@ export async function POST(request: NextRequest) {
   const author = cleanText(payload.author);
   const isbn = cleanText(payload.isbn);
   const estimatedValue = cleanPrice(payload.estimated_value);
+  const status = cleanText(payload.status);
+  const errorMessage = cleanText(payload.error);
+  const isError = status === "error";
 
   const book = await prisma.book.findUnique({ where: { id: bookId } });
   if (!book) {
     // The service delivers its webhook while the registering request is still
-    // in flight. Without a valuation there is nothing worth persisting yet:
+    // in flight. Without a valuation or error there is nothing worth persisting yet:
     // the registering action creates the row itself.
-    if (estimatedValue === null) {
+    if (estimatedValue === null && !isError) {
       return NextResponse.json({ error: "book not found" }, { status: 404 });
     }
     try {
@@ -69,11 +74,14 @@ export async function POST(request: NextRequest) {
           author,
           isbn,
           conservationState: cleanText(payload.conservation_state) ?? "unknown",
-          status: "registered",
+          status: isError ? "error" : "registered",
           price: estimatedValue,
-          priced: true,
+          priced: estimatedValue !== null,
         },
       });
+      if (isError && errorMessage) {
+        console.error(`Book valuation error for ${bookId}: ${errorMessage}`);
+      }
       return NextResponse.json({ ok: true });
     } catch (e) {
       if (
@@ -90,7 +98,12 @@ export async function POST(request: NextRequest) {
   if (!target) return NextResponse.json({ error: "book not found" }, { status: 404 });
 
   const data: Prisma.BookUpdateInput = {};
-  if (estimatedValue !== null) {
+  if (isError) {
+    data.status = "error";
+    if (errorMessage) {
+      console.error(`Book valuation error for ${bookId}: ${errorMessage}`);
+    }
+  } else if (estimatedValue !== null) {
     data.price = estimatedValue;
     data.priced = true;
   }

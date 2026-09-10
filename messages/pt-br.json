@@ -1,6 +1,12 @@
 {
+  "ConservationState": {
+    "asNew": "Como Novo",
+    "nearFine": "Quase Novo (FN)",
+    "good": "Bom (G)",
+    "fair": "Regular"
+  },
   "HomePage": {
-    "title": "Olá mundo!"
+    "title": "Hello world!"
   },
   "Metadata": {
     "appName": "Aplicativo",
@@ -141,7 +147,9 @@
     "bookNameOrIsbnRequired": "Informe um ISBN, ou o nome e o autor, para o livro",
     "priceFinderNotConfigured": "O serviço de preços não está configurado.",
     "priceFinderUnreachable": "O serviço de preços está indisponível. Tente novamente.",
-    "priceFinderRejected": "O serviço de preços rejeitou este livro."
+    "priceFinderRejected": "O serviço de preços rejeitou este livro.",
+    "bookNotRegistered": "Este livro não pode ser reprocessado.",
+    "bookTooRecent": "Aguarde pelo menos 5 minutos antes de reprocessar."
   },
   "Emails": {
     "resetPassword": {
@@ -289,7 +297,9 @@
     "keep": "Manter",
     "delete": "Excluir",
     "unnamed": "Sem nome",
-    "notPriced": "Sem preço"
+    "notPriced": "Sem preço",
+    "reprocess": "Reprocessar preço",
+    "reprocessing": "Reprocessando..."
   },
   "AddBookDrawer": {
     "addBook": "Adicionar livro",
@@ -306,7 +316,7 @@
     "isbnField": "ISBN",
     "isbnPlaceholder": "ISBN do livro",
     "conservationState": "Estado de conservação",
-    "conservationPlaceholder": "ex.: bom",
+    "selectConservation": "Selecione o estado de conservação",
     "nameOrIsbnRequired": "Informe um ISBN, ou o nome e o autor.",
     "cancel": "Cancelar",
     "continue": "Continuar",
