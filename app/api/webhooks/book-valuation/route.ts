@@ -56,13 +56,14 @@ export async function POST(request: NextRequest) {
   const status = cleanText(payload.status);
   const errorMessage = cleanText(payload.error);
   const isError = status === "error";
+  const isNotFound = status === "not_found";
 
   const book = await prisma.book.findUnique({ where: { id: bookId } });
   if (!book) {
     // The service delivers its webhook while the registering request is still
     // in flight. Without a valuation or error there is nothing worth persisting yet:
     // the registering action creates the row itself.
-    if (estimatedValue === null && !isError) {
+    if (estimatedValue === null && !isError && !isNotFound) {
       return NextResponse.json({ error: "book not found" }, { status: 404 });
     }
     try {
@@ -74,7 +75,7 @@ export async function POST(request: NextRequest) {
           author,
           isbn,
           conservationState: cleanText(payload.conservation_state) ?? "unknown",
-          status: isError ? "error" : "registered",
+          status: isError ? "error" : isNotFound ? "not_found" : "registered",
           price: estimatedValue,
           priced: estimatedValue !== null,
         },
@@ -103,13 +104,15 @@ export async function POST(request: NextRequest) {
     if (errorMessage) {
       console.error(`Book valuation error for ${bookId}: ${errorMessage}`);
     }
+  } else if (isNotFound) {
+    data.status = "not_found";
   } else {
     if (estimatedValue !== null) {
       data.price = estimatedValue;
       data.priced = true;
     }
-    // A valuation that succeeded after a previous error must clear the error status.
-    if (target.status === "error") {
+    // A valuation that succeeded after a previous error/not-found must clear it.
+    if (target.status === "error" || target.status === "not_found") {
       data.status = "registered";
     }
   }

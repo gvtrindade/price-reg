@@ -1,4 +1,5 @@
 import { auth } from "@/lib/auth";
+import { REPROCESSABLE_STATUSES } from "@/lib/book-status";
 import { prisma } from "@/lib/prisma";
 import { BookDetail } from "@/components/book-detail";
 import { headers } from "next/headers";
@@ -24,7 +25,7 @@ export default async function BookDetailPage({
 
   const fiveMinutesAgo = new Date(new Date().getTime() - 5 * 60 * 1000);
   const canReprocess =
-    (book.status === "registered" || book.status === "error") && book.createdAt <= fiveMinutesAgo;
+    REPROCESSABLE_STATUSES.includes(book.status) && book.createdAt <= fiveMinutesAgo;
 
   return (
     <BookDetail

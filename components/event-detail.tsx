@@ -28,7 +28,8 @@ import {
 import { Input } from "@/components/ui/input";
 import { useTranslations } from "next-intl";
 import Link from "next/link";
-import { ArrowLeft, MoreHorizontal, Pencil, Trash2 } from "lucide-react";
+import { ArrowLeft, MoreHorizontal, Trash2 } from "lucide-react";
+import { BOOK_STATUS_LABEL_KEYS, type BookStatus } from "@/lib/book-status";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
@@ -64,6 +65,7 @@ export function EventDetail({
 }) {
   const t = useTranslations("EventDetail");
   const tState = useTranslations("ConservationState");
+  const tStatus = useTranslations("BookStatus");
   const router = useRouter();
   const [search, setSearch] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -196,75 +198,86 @@ export function EventDetail({
           </p>
         ) : (
           <ul className="divide-y rounded-lg border">
-            {books.map((book) => (
-              <li key={book.id} className="flex items-center gap-4 p-4">
-                <div className="min-w-0 flex-1">
-                  <p className="truncate font-medium">
-                    {book.title ?? book.isbn ?? "—"}
-                  </p>
-                  <p className="text-sm text-muted-foreground">
-                    {tState((CONSERVATION_LABELS[book.conservationState] ?? book.conservationState) as "asNew" | "nearFine" | "good" | "fair")} · {book.status}
-                  </p>
-                </div>
-                <span className="shrink-0 text-sm tabular-nums">
-                  {book.price ?? "—"}
-                </span>
-                <div className="flex shrink-0 items-center gap-1">
-                  <Button
-                    variant="ghost"
-                    size="icon-sm"
+            {books.map((book) => {
+              const statusKey = BOOK_STATUS_LABEL_KEYS[book.status as BookStatus];
+              return (
+                <li
+                  key={book.id}
+                  className="relative flex items-center gap-4 p-4 transition-colors hover:bg-accent/50"
+                >
+                  <Link
+                    href={`/events/${event.id}/books/${book.id}`}
                     aria-label={t("openBook")}
-                    render={
-                      <Link href={`/events/${event.id}/books/${book.id}`} />
-                    }
-                    nativeButton={false}
-                  >
-                    <Pencil />
-                  </Button>
+                    className="absolute inset-0 rounded-lg outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
+                  />
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate font-medium">
+                      {book.title ?? book.isbn ?? "—"}
+                    </p>
+                    <p className="text-sm text-muted-foreground">
+                      {tState(
+                        (CONSERVATION_LABELS[book.conservationState] ??
+                          book.conservationState) as
+                          | "asNew"
+                          | "nearFine"
+                          | "good"
+                          | "fair",
+                      )}{" "}
+                      ·{" "}
+                      {statusKey
+                        ? tStatus(statusKey as "registered" | "error" | "notFound")
+                        : book.status}
+                    </p>
+                  </div>
+                  <span className="shrink-0 text-sm tabular-nums">
+                    {book.price ?? "—"}
+                  </span>
                   {isManager && isActive && (
-                    <AlertDialog>
-                      <AlertDialogTrigger
-                        render={
-                          <Button
-                            variant="ghost"
-                            size="icon-sm"
-                            aria-label={t("deleteBook")}
-                          />
-                        }
-                      >
-                        <Trash2 />
-                      </AlertDialogTrigger>
-                      <AlertDialogContent>
-                        <AlertDialogHeader>
-                          <AlertDialogTitle>
-                            {t("deleteBookConfirmTitle")}
-                          </AlertDialogTitle>
-                          <AlertDialogDescription>
-                            {t("deleteBookConfirmDescription", {
-                              name: book.title ?? book.isbn ?? "",
-                            })}
-                          </AlertDialogDescription>
-                        </AlertDialogHeader>
-                        <AlertDialogFooter>
-                          <AlertDialogCancel>{t("keep")}</AlertDialogCancel>
-                          <AlertDialogAction
-                            onClick={async () => {
-                              const res = await deleteBookAction({
-                                bookId: book.id,
-                              });
-                              if (res?.error) setError(res.error);
-                              else refresh();
-                            }}
-                          >
-                            {t("delete")}
-                          </AlertDialogAction>
-                        </AlertDialogFooter>
-                      </AlertDialogContent>
-                    </AlertDialog>
+                    <div className="relative z-10 flex shrink-0 items-center gap-1">
+                      <AlertDialog>
+                        <AlertDialogTrigger
+                          render={
+                            <Button
+                              variant="ghost"
+                              size="icon-sm"
+                              aria-label={t("deleteBook")}
+                            />
+                          }
+                        >
+                          <Trash2 />
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                          <AlertDialogHeader>
+                            <AlertDialogTitle>
+                              {t("deleteBookConfirmTitle")}
+                            </AlertDialogTitle>
+                            <AlertDialogDescription>
+                              {t("deleteBookConfirmDescription", {
+                                name: book.title ?? book.isbn ?? "",
+                              })}
+                            </AlertDialogDescription>
+                          </AlertDialogHeader>
+                          <AlertDialogFooter>
+                            <AlertDialogCancel>{t("keep")}</AlertDialogCancel>
+                            <AlertDialogAction
+                              onClick={async () => {
+                                const res = await deleteBookAction({
+                                  bookId: book.id,
+                                });
+                                if (res?.error) setError(res.error);
+                                else refresh();
+                              }}
+                            >
+                              {t("delete")}
+                            </AlertDialogAction>
+                          </AlertDialogFooter>
+                        </AlertDialogContent>
+                      </AlertDialog>
+                    </div>
                   )}
-                </div>
-              </li>
-            ))}
+                </li>
+              );
+            })}
           </ul>
         )}
       </section>

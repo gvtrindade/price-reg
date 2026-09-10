@@ -2,6 +2,7 @@
 
 import * as Sentry from "@sentry/nextjs";
 import { auth } from "@/lib/auth";
+import { REPROCESSABLE_STATUSES } from "@/lib/book-status";
 import { prisma } from "@/lib/prisma";
 import { webhookToken } from "@/lib/webhook-token";
 import { headers } from "next/headers";
@@ -253,7 +254,8 @@ export async function reprocessBookAction(data: { bookId: string }) {
       include: { event: { select: { id: true, status: true } } },
     });
     if (!book || book.event.status !== "ACTIVE") return { error: t("bookNotFound") };
-    if (book.status !== "registered" && book.status !== "error") return { error: t("bookNotRegistered") };
+    if (!REPROCESSABLE_STATUSES.includes(book.status))
+      return { error: t("bookNotRegistered") };
 
     const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000);
     if (book.createdAt > fiveMinutesAgo) return { error: t("bookTooRecent") };

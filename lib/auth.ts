@@ -10,7 +10,7 @@ const prisma = new PrismaClient({
 
 export const auth = betterAuth({
   trustedOrigins: [
-    "https://192.168.1.10:3000"
+    "https://192.168.1.12:3000"
   ],
   database: prismaAdapter(prisma, {
     provider: "postgresql",

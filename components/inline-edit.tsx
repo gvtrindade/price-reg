@@ -47,6 +47,11 @@ export function InlineEdit({
     if (editing) inputRef.current?.select();
   }, [editing]);
 
+  const display =
+    options && value
+      ? (options.find((o) => o.value === value)?.label ?? value)
+      : value;
+
   async function save() {
     const next = draft.trim();
     if (!next || next === value.trim()) {
@@ -72,8 +77,8 @@ export function InlineEdit({
 
   if (!editable)
     return (
-      <span className={cn(!value && "text-muted-foreground", className)}>
-        {value || placeholder || "—"}
+      <span className={cn(!display && "text-muted-foreground", className)}>
+        {display || placeholder || "—"}
       </span>
     );
 
@@ -143,7 +148,7 @@ export function InlineEdit({
         className,
       )}
     >
-      {value || (
+      {display || (
         <span className="text-muted-foreground">{placeholder ?? "—"}</span>
       )}
     </button>

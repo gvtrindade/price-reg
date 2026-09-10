@@ -3,6 +3,11 @@
 import { deleteBookAction, reprocessBookAction, updateBookAction } from "@/actions/events";
 import { InlineEdit } from "@/components/inline-edit";
 import {
+  BOOK_STATUS_LABEL_KEYS,
+  BOOK_STATUSES,
+  type BookStatus,
+} from "@/lib/book-status";
+import {
   AlertDialog,
   AlertDialogAction,
   AlertDialogCancel,
@@ -33,6 +38,11 @@ const CONSERVATION_OPTIONS = [
   { value: "Fair", labelKey: "fair" },
 ] as const;
 
+const STATUS_OPTIONS = Object.values(BOOK_STATUSES).map((value) => ({
+  value,
+  labelKey: BOOK_STATUS_LABEL_KEYS[value as BookStatus],
+}));
+
 interface BookData {
   id: string;
   title: string | null;
@@ -58,6 +68,7 @@ export function BookDetail({
 }) {
   const t = useTranslations("BookDetail");
   const tState = useTranslations("ConservationState");
+  const tStatus = useTranslations("BookStatus");
   const router = useRouter();
   const [error, setError] = useState<string | null>(null);
   const [deleteOpen, setDeleteOpen] = useState(false);
@@ -65,7 +76,9 @@ export function BookDetail({
 
   const canEdit = isManager && eventActive;
 
-  function save(field: "title" | "price" | "conservationState" | "status") {
+  function save(
+    field: "title" | "author" | "price" | "conservationState" | "status",
+  ) {
     return async (value: string) => {
       setError(null);
       const res = await updateBookAction({ bookId: book.id, [field]: value });
@@ -146,11 +159,14 @@ export function BookDetail({
           </span>
         </Field>
         <Field label={t("author")}>
-          <span className="text-sm">
-            {book.author || (
-              <span className="text-muted-foreground">{t("unknownAuthor")}</span>
-            )}
-          </span>
+          <InlineEdit
+            value={book.author ?? ""}
+            placeholder={t("unknownAuthor")}
+            editable={canEdit}
+            label={t("author")}
+            onSave={save("author")}
+            onError={setError}
+          />
         </Field>
         <Field label={t("price")}>
           <InlineEdit
@@ -183,6 +199,10 @@ export function BookDetail({
             label={t("status")}
             onSave={save("status")}
             onError={setError}
+            options={STATUS_OPTIONS.map((o) => ({
+              value: o.value,
+              label: tStatus(o.labelKey as "registered" | "error" | "notFound"),
+            }))}
           />
         </Field>
       </dl>

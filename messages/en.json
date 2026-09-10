@@ -5,6 +5,11 @@
     "good": "Good (G)",
     "fair": "Fair"
   },
+  "BookStatus": {
+    "registered": "Registered",
+    "error": "Error",
+    "notFound": "Not found"
+  },
   "HomePage": {
     "title": "Hello world!"
   },
