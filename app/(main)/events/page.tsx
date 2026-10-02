@@ -1,4 +1,4 @@
-import { CreateEventDialog } from "@/components/create-event-dialog";
+import { CreateEventDialog } from "./components/create-event-dialog";
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";

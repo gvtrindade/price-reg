@@ -6,8 +6,8 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { SettingsTabs } from "@/components/settings-tabs";
-import { UserTable } from "@/components/user-table";
+import { SettingsTabs } from "./components/settings-tabs";
+import { UserTable } from "./components/user-table";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { getTranslations } from "next-intl/server";

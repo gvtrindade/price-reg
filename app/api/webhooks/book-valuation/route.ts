@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { verifyWebhookToken } from "@/lib/webhook-token";
+import { BOOK_CATEGORIES } from "@/lib/book-category";
 import { Prisma } from "@/prisma/generated/client";
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
@@ -9,6 +10,7 @@ interface ValuationPayload {
   author?: unknown;
   isbn?: unknown;
   conservation_state?: unknown;
+  category?: unknown;
   estimated_value?: unknown;
   status?: unknown;
   error?: unknown;
@@ -24,6 +26,15 @@ function cleanPrice(value: unknown): number | null {
   if (typeof value !== "number" || !Number.isFinite(value) || value <= 0)
     return null;
   return Math.round(value * 100) / 100;
+}
+
+function cleanCategory(value: unknown): string | null {
+  if (typeof value !== "string") return null;
+  const trimmed = value.trim();
+  if (!trimmed) return null;
+  return (Object.values(BOOK_CATEGORIES) as string[]).includes(trimmed)
+    ? trimmed
+    : null;
 }
 
 export async function POST(request: NextRequest) {
@@ -52,6 +63,7 @@ export async function POST(request: NextRequest) {
   const title = cleanText(payload.title);
   const author = cleanText(payload.author);
   const isbn = cleanText(payload.isbn);
+  const category = cleanCategory(payload.category);
   const estimatedValue = cleanPrice(payload.estimated_value);
   const status = cleanText(payload.status);
   const errorMessage = cleanText(payload.error);
@@ -74,6 +86,7 @@ export async function POST(request: NextRequest) {
           title,
           author,
           isbn,
+          category,
           conservationState: cleanText(payload.conservation_state) ?? "unknown",
           status: isError ? "error" : isNotFound ? "not_found" : "registered",
           price: estimatedValue,
@@ -119,6 +132,7 @@ export async function POST(request: NextRequest) {
   if (title && title !== target.title) data.title = title;
   if (author && author !== target.author) data.author = author;
   if (isbn && isbn !== target.isbn) data.isbn = isbn;
+  if (category && category !== target.category) data.category = category;
 
   if (Object.keys(data).length > 0) {
     await prisma.book.update({ where: { id: bookId }, data });

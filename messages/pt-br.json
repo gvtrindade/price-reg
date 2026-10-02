@@ -5,10 +5,25 @@
     "good": "Bom (G)",
     "fair": "Regular"
   },
+  "BookCategory": {
+    "religion": "Religião",
+    "literature": "Literatura",
+    "sociology": "Sociologia",
+    "selfHelp": "Autoajuda",
+    "law": "Direito",
+    "health": "Saúde",
+    "culture": "Cultura",
+    "studies": "Estudos",
+    "foreign": "Estrangeiro",
+    "languages": "Linguagens"
+  },
   "BookStatus": {
     "registered": "Registrado",
     "error": "Erro",
-    "notFound": "Não encontrado"
+    "notFound": "Não encontrado",
+    "queued": "Na fila",
+    "printing": "Imprimindo",
+    "printed": "Impresso"
   },
   "HomePage": {
     "title": "Hello world!"
@@ -147,6 +162,7 @@
     "invalidAuthor": "O autor do livro é obrigatório",
     "invalidPrice": "Digite um preço válido",
     "invalidConservationState": "O estado de conservação é obrigatório",
+    "invalidCategory": "Categoria inválida",
     "invalidStatus": "O status é obrigatório",
     "sessionExpired": "Sua sessão expirou. Entre novamente.",
     "bookNameOrIsbnRequired": "Informe um ISBN, ou o nome e o autor, para o livro",
@@ -154,7 +170,12 @@
     "priceFinderUnreachable": "O serviço de preços está indisponível. Tente novamente.",
     "priceFinderRejected": "O serviço de preços rejeitou este livro.",
     "bookNotRegistered": "Este livro não pode ser reprocessado.",
-    "bookTooRecent": "Aguarde pelo menos 5 minutos antes de reprocessar."
+    "bookTooRecent": "Aguarde pelo menos 5 minutos antes de reprocessar.",
+    "noPrintTemplate": "Nenhum modelo de impressão configurado para este evento.",
+    "printServiceNotConfigured": "O serviço de impressão não está configurado.",
+    "printServiceUnreachable": "O serviço de impressão está indisponível.",
+    "printServiceRejected": "O serviço de impressão rejeitou a solicitação.",
+    "invalidSvg": "O arquivo deve ser um SVG válido."
   },
   "Emails": {
     "resetPassword": {
@@ -271,20 +292,35 @@
     "actions": "Ações do evento",
     "cancelEvent": "Cancelar evento",
     "cancelEventConfirmTitle": "Cancelar este evento?",
-    "cancelEventConfirmDescription": "O evento “{name}” será movido para a lista de inativos.",
+    "cancelEventConfirmDescription": "O evento \"{name}\" será movido para a lista de inativos.",
     "keep": "Manter evento",
     "cancelled": "Cancelado",
     "books": "Livros",
     "bookCount": "{count, plural, =0 {Nenhum livro} one {# livro} other {# livros}}",
-    "searchPlaceholder": "Buscar por nome ou ISBN",
+    "searchPlaceholder": "Buscar por nome ou autor",
     "noBooks": "Nenhum livro neste evento ainda.",
     "noResults": "Nenhum livro corresponde à sua busca.",
     "openBook": "Abrir livro",
     "deleteBook": "Excluir livro",
     "deleteBookConfirmTitle": "Excluir este livro?",
-    "deleteBookConfirmDescription": "“{name}” será excluído permanentemente.",
+    "deleteBookConfirmDescription": "\"{name}\" será excluído permanentemente.",
     "delete": "Excluir",
-    "backToEvents": "Voltar aos eventos"
+    "backToEvents": "Voltar aos eventos",
+    "processingTab": "Processando",
+    "printingTab": "Impressão",
+    "totalsTab": "Totais",
+    "queuedToPrint": "Na fila de impressão",
+    "printing": "Imprimindo",
+    "printed": "Impresso",
+    "stopPrint": "Parar impressão",
+    "stopPrintConfirmTitle": "Parar impressão deste livro?",
+    "stopPrintConfirmDescription": "\"{name}\" será movido de volta para a fila de impressão.",
+    "totalValue": "Valor total",
+    "cancel": "Cancelar",
+    "changeTemplate": "Alterar modelo",
+    "newTemplate": "Novo modelo",
+    "print": "Imprimir",
+    "printing": "Imprimindo..."
   },
   "BookDetail": {
     "backToEvent": "Voltar ao evento",
@@ -293,6 +329,8 @@
     "unknownAuthor": "Desconhecido",
     "isbn": "ISBN",
     "price": "Preço",
+    "category": "Categoria",
+    "noCategory": "Nenhuma",
     "conservationState": "Estado de conservação",
     "status": "Status",
     "actions": "Ações do livro",
@@ -344,5 +382,18 @@
     "cameraNumber": "Câmera {number}",
     "cameraDefault": "Câmera padrão",
     "setDefault": "Definir como padrão"
+  },
+  "PrintTemplate": {
+    "title": "Modelo de impressão",
+    "backToEvent": "Voltar ao evento",
+    "dropzoneText": "Arraste e solte um arquivo SVG aqui, ou escolha um abaixo",
+    "chooseFile": "Escolher arquivo",
+    "save": "Salvar modelo",
+    "saving": "Salvando...",
+    "deleteTemplate": "Excluir modelo",
+    "removeFile": "Remover arquivo",
+    "templatePreview": "Pré-visualização do modelo",
+    "saveError": "Falha ao salvar o modelo.",
+    "deleteError": "Falha ao excluir o modelo."
   }
 }

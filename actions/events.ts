@@ -3,8 +3,9 @@
 import * as Sentry from "@sentry/nextjs";
 import { auth } from "@/lib/auth";
 import { REPROCESSABLE_STATUSES } from "@/lib/book-status";
+import { BOOK_CATEGORIES, type BookCategory } from "@/lib/book-category";
 import { prisma } from "@/lib/prisma";
-import { webhookToken } from "@/lib/webhook-token";
+import { webhookToken, printResultWebhookToken } from "@/lib/webhook-token";
 import { headers } from "next/headers";
 import { getTranslations } from "next-intl/server";
 
@@ -69,12 +70,14 @@ type BookFieldError =
   | "invalidAuthor"
   | "invalidPrice"
   | "invalidConservationState"
+  | "invalidCategory"
   | "invalidStatus";
 
 function parseBookData(data: {
   title?: string;
   author?: string;
   price?: string;
+  category?: string;
   conservationState?: string;
   status?: string;
 }) {
@@ -83,6 +86,7 @@ function parseBookData(data: {
     author?: string;
     price?: number;
     priced?: boolean;
+    category?: string | null;
     conservationState?: string;
     status?: string;
   } = {};
@@ -108,6 +112,16 @@ function parseBookData(data: {
     const cs = data.conservationState.trim();
     if (!cs) return { error: "invalidConservationState" as BookFieldError };
     out.conservationState = cs;
+  }
+  if (data.category !== undefined) {
+    const cat = data.category.trim();
+    if (!cat) {
+      out.category = null;
+    } else if (!(Object.values(BOOK_CATEGORIES) as string[]).includes(cat)) {
+      return { error: "invalidCategory" as BookFieldError };
+    } else {
+      out.category = cat as BookCategory;
+    }
   }
   if (data.status !== undefined) {
     const status = data.status.trim();
@@ -223,6 +237,7 @@ export async function updateBookAction(data: {
   title?: string;
   author?: string;
   price?: string;
+  category?: string;
   conservationState?: string;
   status?: string;
 }) {
@@ -304,6 +319,112 @@ export async function deleteBookAction(data: { bookId: string }) {
 
     const { count } = await prisma.book.deleteMany({ where: { id: data.bookId } });
     if (count === 0) return { error: t("bookNotFound") };
+    return { error: null };
+  });
+}
+
+export async function upsertPrintTemplateAction(data: {
+  eventId: string;
+  blob: Uint8Array;
+}) {
+  return Sentry.withServerActionInstrumentation("upsertPrintTemplateAction", async () => {
+    const t = await getTranslations("Errors");
+    if (!(await requireManager())) return { error: t("notManager") };
+
+    const event = await prisma.event.findUnique({
+      where: { id: data.eventId },
+      select: { id: true },
+    });
+    if (!event) return { error: t("eventNotFound") };
+
+    const buffer = Buffer.from(data.blob);
+    const content = buffer.toString("utf8", 0, Math.min(1000, buffer.length));
+    if (!content.includes("<svg")) {
+      return { error: t("invalidSvg") };
+    }
+
+    await prisma.printTemplate.upsert({
+      where: { eventId: data.eventId },
+      create: {
+        eventId: data.eventId,
+        blob: buffer,
+      },
+      update: {
+        blob: buffer,
+      },
+    });
+    return { error: null };
+  });
+}
+
+export async function deletePrintTemplateAction(data: { eventId: string }) {
+  return Sentry.withServerActionInstrumentation("deletePrintTemplateAction", async () => {
+    const t = await getTranslations("Errors");
+    if (!(await requireManager())) return { error: t("notManager") };
+
+    await prisma.printTemplate.deleteMany({ where: { eventId: data.eventId } });
+    return { error: null };
+  });
+}
+
+export async function printBooksAction(data: { eventId: string; bookIds: string[] }) {
+  return Sentry.withServerActionInstrumentation("printBooksAction", async () => {
+    const t = await getTranslations("Errors");
+    if (!(await requireManager())) return { error: t("notManager") };
+
+    const event = await prisma.event.findUnique({
+      where: { id: data.eventId },
+      include: {
+        printTemplate: { select: { blob: true } },
+        books: {
+          where: { id: { in: data.bookIds } },
+          select: { id: true, title: true, author: true, price: true },
+        },
+      },
+    });
+    if (!event) return { error: t("eventNotFound") };
+    if (!event.printTemplate) return { error: "noPrintTemplate" };
+
+    const serviceUrl = process.env.NEXT_PRINTER_SERVICE_URL;
+    const webhookBase = process.env.NEXT_APPLICATION_URL;
+    if (!serviceUrl) return { error: "printServiceNotConfigured" };
+    if (!webhookBase) return { error: "printServiceNotConfigured" };
+
+    const jobId = crypto.randomUUID();
+    const callbackUrl = new URL("/api/webhooks/print-result", webhookBase);
+    callbackUrl.searchParams.set("jobId", jobId);
+    callbackUrl.searchParams.set("eventId", data.eventId);
+    callbackUrl.searchParams.set("token", printResultWebhookToken(jobId, data.eventId));
+
+    const books = event.books.map((book) => ({
+      id: book.id,
+      title: book.title ?? "",
+      author: book.author ?? "",
+      price: book.price !== null ? Number(book.price) : null,
+    }));
+
+    try {
+      const response = await fetch(new URL("/print", serviceUrl), {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        cache: "no-store",
+        body: JSON.stringify({
+          job_id: jobId,
+          books,
+          template: Buffer.from(event.printTemplate.blob).toString("base64"),
+          callback_url: callbackUrl.toString(),
+        }),
+      });
+      if (!response.ok) return { error: "printServiceRejected" };
+    } catch {
+      return { error: "printServiceUnreachable" };
+    }
+
+    await prisma.book.updateMany({
+      where: { id: { in: data.bookIds } },
+      data: { status: "printing" },
+    });
+
     return { error: null };
   });
 }

@@ -4,9 +4,10 @@ import { deleteBookAction, reprocessBookAction, updateBookAction } from "@/actio
 import { InlineEdit } from "@/components/inline-edit";
 import {
   BOOK_STATUS_LABEL_KEYS,
-  BOOK_STATUSES,
-  type BookStatus,
+  EDITABLE_BOOK_STATUSES,
+  BookStatus,
 } from "@/lib/book-status";
+import { BOOK_CATEGORY_OPTIONS } from "@/lib/book-category";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -38,7 +39,7 @@ const CONSERVATION_OPTIONS = [
   { value: "Fair", labelKey: "fair" },
 ] as const;
 
-const STATUS_OPTIONS = Object.values(BOOK_STATUSES).map((value) => ({
+const STATUS_OPTIONS = EDITABLE_BOOK_STATUSES.map((value) => ({
   value,
   labelKey: BOOK_STATUS_LABEL_KEYS[value as BookStatus],
 }));
@@ -48,6 +49,7 @@ interface BookData {
   title: string | null;
   author: string | null;
   isbn: string | null;
+  category: string | null;
   conservationState: string;
   status: string;
   price: string | null;
@@ -69,6 +71,7 @@ export function BookDetail({
   const t = useTranslations("BookDetail");
   const tState = useTranslations("ConservationState");
   const tStatus = useTranslations("BookStatus");
+  const tCategory = useTranslations("BookCategory");
   const router = useRouter();
   const [error, setError] = useState<string | null>(null);
   const [deleteOpen, setDeleteOpen] = useState(false);
@@ -77,7 +80,7 @@ export function BookDetail({
   const canEdit = isManager && eventActive;
 
   function save(
-    field: "title" | "author" | "price" | "conservationState" | "status",
+    field: "title" | "author" | "price" | "category" | "conservationState" | "status",
   ) {
     return async (value: string) => {
       setError(null);
@@ -166,6 +169,23 @@ export function BookDetail({
             label={t("author")}
             onSave={save("author")}
             onError={setError}
+          />
+        </Field>
+        <Field label={t("category")}>
+          <InlineEdit
+            value={book.category ?? ""}
+            placeholder={t("noCategory")}
+            editable={canEdit}
+            label={t("category")}
+            onSave={save("category")}
+            onError={setError}
+            options={[
+              { value: "", label: t("noCategory") },
+              ...BOOK_CATEGORY_OPTIONS.map((o) => ({
+                value: o.value,
+                label: tCategory(o.labelKey as "religion" | "health" | "selfHelp" | "history" | "literature" | "children"),
+              })),
+            ]}
           />
         </Field>
         <Field label={t("price")}>

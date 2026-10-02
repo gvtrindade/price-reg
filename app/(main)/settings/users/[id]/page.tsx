@@ -3,7 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { getTranslations } from "next-intl/server";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
-import { UserDetail } from "@/components/user-detail";
+import { UserDetail } from "./components/user-detail";
 
 export default async function UserDetailPage({
   params,

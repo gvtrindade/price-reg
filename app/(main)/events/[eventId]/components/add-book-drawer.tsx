@@ -19,7 +19,7 @@ const CONSERVATION_OPTIONS = [
   { value: "Good (G)", labelKey: "good" },
   { value: "Fair", labelKey: "fair" },
 ] as const;
-import { BookScanner } from "@/components/book-scanner";
+import { BookScanner } from "./book-scanner";
 import { Hand, Plus, ScanLine } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";

@@ -5,10 +5,25 @@
     "good": "Good (G)",
     "fair": "Fair"
   },
+  "BookCategory": {
+    "religion": "Religion",
+    "literature": "Literature",
+    "sociology": "Sociology",
+    "selfHelp": "Self-help",
+    "law": "Law",
+    "health": "Health",
+    "culture": "Culture",
+    "studies": "Studies",
+    "foreign": "Foreign",
+    "languages": "Languages"
+  },
   "BookStatus": {
     "registered": "Registered",
     "error": "Error",
-    "notFound": "Not found"
+    "notFound": "Not found",
+    "queued": "Queued",
+    "printing": "Printing",
+    "printed": "Printed"
   },
   "HomePage": {
     "title": "Hello world!"
@@ -177,6 +192,7 @@
     "invalidAuthor": "Book author is required",
     "invalidPrice": "Please enter a valid price",
     "invalidConservationState": "Conservation state is required",
+    "invalidCategory": "Invalid category",
     "invalidStatus": "Status is required",
     "sessionExpired": "Your session has expired. Please sign in again.",
     "bookNameOrIsbnRequired": "Enter an ISBN, or both the name and the author, for the book",
@@ -184,7 +200,12 @@
     "priceFinderUnreachable": "The price service is unreachable. Please try again.",
     "priceFinderRejected": "The price service rejected this book.",
     "bookNotRegistered": "This book cannot be reprocessed.",
-    "bookTooRecent": "Please wait at least 5 minutes before reprocessing."
+    "bookTooRecent": "Please wait at least 5 minutes before reprocessing.",
+    "noPrintTemplate": "No print template configured for this event.",
+    "printServiceNotConfigured": "The print service is not configured.",
+    "printServiceUnreachable": "The print service is unreachable.",
+    "printServiceRejected": "The print service rejected the request.",
+    "invalidSvg": "The file must be a valid SVG."
   },
   "Emails": {
     "resetPassword": {
@@ -271,20 +292,35 @@
     "actions": "Event actions",
     "cancelEvent": "Cancel event",
     "cancelEventConfirmTitle": "Cancel this event?",
-    "cancelEventConfirmDescription": "The event “{name}” will be moved to the inactive list.",
+    "cancelEventConfirmDescription": "The event \"{name}\" will be moved to the inactive list.",
     "keep": "Keep event",
     "cancelled": "Cancelled",
     "books": "Books",
     "bookCount": "{count, plural, =0 {No books} one {# book} other {# books}}",
-    "searchPlaceholder": "Search by name or ISBN",
+    "searchPlaceholder": "Search by name or author",
     "noBooks": "No books in this event yet.",
     "noResults": "No books match your search.",
     "openBook": "Open book",
     "deleteBook": "Delete book",
     "deleteBookConfirmTitle": "Delete this book?",
-    "deleteBookConfirmDescription": "“{name}” will be permanently deleted.",
+    "deleteBookConfirmDescription": "\"{name}\" will be permanently deleted.",
     "delete": "Delete",
-    "backToEvents": "Back to events"
+    "backToEvents": "Back to events",
+    "processingTab": "Processing",
+    "printingTab": "Printing",
+    "totalsTab": "Totals",
+    "queuedToPrint": "Queued to print",
+    "printing": "Printing",
+    "printed": "Printed",
+    "stopPrint": "Stop print",
+    "stopPrintConfirmTitle": "Stop printing this book?",
+    "stopPrintConfirmDescription": "\"{name}\" will be moved back to the print queue.",
+    "totalValue": "Total value",
+    "cancel": "Cancel",
+    "changeTemplate": "Change template",
+    "newTemplate": "New template",
+    "print": "Print",
+    "printing": "Printing..."
   },
   "BookDetail": {
     "backToEvent": "Back to event",
@@ -293,6 +329,8 @@
     "unknownAuthor": "Unknown",
     "isbn": "ISBN",
     "price": "Price",
+    "category": "Category",
+    "noCategory": "None",
     "conservationState": "Conservation state",
     "status": "Status",
     "actions": "Book actions",
@@ -344,5 +382,18 @@
     "cameraNumber": "Camera {number}",
     "cameraDefault": "Default camera",
     "setDefault": "Set as default"
+  },
+  "PrintTemplate": {
+    "title": "Print template",
+    "backToEvent": "Back to event",
+    "dropzoneText": "Drag and drop an SVG file here, or choose one below",
+    "chooseFile": "Choose file",
+    "save": "Save template",
+    "saving": "Saving...",
+    "deleteTemplate": "Delete template",
+    "removeFile": "Remove file",
+    "templatePreview": "Template preview",
+    "saveError": "Failed to save template.",
+    "deleteError": "Failed to delete template."
   }
 }

@@ -1,7 +1,7 @@
 import { auth } from "@/lib/auth";
 import { REPROCESSABLE_STATUSES } from "@/lib/book-status";
 import { prisma } from "@/lib/prisma";
-import { BookDetail } from "@/components/book-detail";
+import { BookDetail } from "./components/book-detail";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 
@@ -34,6 +34,7 @@ export default async function BookDetailPage({
         title: book.title,
         author: book.author,
         isbn: book.isbn,
+        category: book.category,
         conservationState: book.conservationState,
         status: book.status,
         price: book.price === null ? null : String(book.price),

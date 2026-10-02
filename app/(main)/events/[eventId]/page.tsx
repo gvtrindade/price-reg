@@ -1,6 +1,6 @@
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { EventDetail } from "@/components/event-detail";
+import { EventDetail } from "./components/event-detail";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 
@@ -24,11 +24,15 @@ export default async function EventDetailPage({
         select: {
           id: true,
           title: true,
+          author: true,
           isbn: true,
           conservationState: true,
           status: true,
           price: true,
         },
+      },
+      printTemplate: {
+        select: { id: true },
       },
     },
   });
@@ -40,6 +44,7 @@ export default async function EventDetailPage({
         id: event.id,
         title: event.title,
         status: event.status,
+        hasTemplate: event.printTemplate !== null,
         books: event.books.map((book) => ({
           ...book,
           price: book.price === null ? null : String(book.price),

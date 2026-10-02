@@ -1,21 +1,47 @@
-export const BOOK_STATUSES = {
-  registered: "registered",
-  error: "error",
-  not_found: "not_found",
-} as const;
+export enum BookStatus {
+  REGISTERED = "registered",
+  ERROR = "error",
+  NOT_FOUND = "not_found",
+  QUEUED = "queued",
+  PRINTING = "printing",
+  PRINTED = "printed",
+}
 
-export type BookStatus = (typeof BOOK_STATUSES)[keyof typeof BOOK_STATUSES];
-
-/** Message key under the `BookStatus` namespace, per status value. */
 export const BOOK_STATUS_LABEL_KEYS: Record<BookStatus, string> = {
-  registered: "registered",
-  error: "error",
-  not_found: "notFound",
+  [BookStatus.REGISTERED]: "registered",
+  [BookStatus.ERROR]: "error",
+  [BookStatus.NOT_FOUND]: "notFound",
+  [BookStatus.QUEUED]: "queued",
+  [BookStatus.PRINTING]: "printing",
+  [BookStatus.PRINTED]: "printed",
 };
 
-/** Statuses whose valuation can be re-run via the reprocess action/webhook. */
 export const REPROCESSABLE_STATUSES: readonly string[] = [
-  BOOK_STATUSES.registered,
-  BOOK_STATUSES.error,
-  BOOK_STATUSES.not_found,
+  BookStatus.REGISTERED,
+  BookStatus.ERROR,
+  BookStatus.NOT_FOUND,
+];
+
+export const PROCESSING_STATUSES: readonly string[] = [
+  BookStatus.REGISTERED,
+  BookStatus.ERROR,
+];
+
+export const PRINTING_QUEUED_STATUSES: readonly string[] = [
+  BookStatus.REGISTERED,
+  BookStatus.QUEUED,
+];
+
+export const PRINTING_IN_PROGRESS_STATUSES: readonly string[] = [
+  BookStatus.PRINTING,
+];
+
+export const PRINTING_DONE_STATUSES: readonly string[] = [
+  BookStatus.PRINTED,
+];
+
+export const EDITABLE_BOOK_STATUSES: readonly string[] = [
+  BookStatus.REGISTERED,
+  BookStatus.ERROR,
+  BookStatus.NOT_FOUND,
 ];

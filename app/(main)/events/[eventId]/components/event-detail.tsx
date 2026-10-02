@@ -1,0 +1,259 @@
+"use client";
+
+import {
+  cancelEventAction,
+  deleteBookAction,
+  updateEventTitleAction,
+} from "@/actions/events";
+import { AddBookDrawer } from "./add-book-drawer";
+import { ProcessingTab } from "./processing-tab";
+import { PrintingTab } from "./printing-tab";
+import { TotalsTab } from "./totals-tab";
+import { InlineEdit } from "@/components/inline-edit";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Tabs } from "@base-ui/react/tabs";
+import { useTranslations } from "next-intl";
+import Link from "next/link";
+import { ArrowLeft, MoreHorizontal } from "lucide-react";
+import {
+  PROCESSING_STATUSES,
+  PRINTING_QUEUED_STATUSES,
+  PRINTING_IN_PROGRESS_STATUSES,
+  PRINTING_DONE_STATUSES,
+} from "@/lib/book-status";
+import { cn } from "@/lib/utils";
+import { useRouter } from "next/navigation";
+import { useState } from "react";
+
+export interface BookRow {
+  id: string;
+  title: string | null;
+  author: string | null;
+  isbn: string | null;
+  conservationState: string;
+  status: string;
+  price: string | null;
+}
+
+export interface EventData {
+  id: string;
+  title: string;
+  status: "ACTIVE" | "INACTIVE";
+  hasTemplate: boolean;
+  books: BookRow[];
+}
+
+export const CONSERVATION_LABELS: Record<string, string> = {
+  "As New": "asNew",
+  "Near Fine (FN)": "nearFine",
+  "Good (G)": "good",
+  Fair: "fair",
+};
+
+const tabClass = cn(
+  "cursor-pointer rounded-t-lg px-4 py-2 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground",
+  "data-[active]:bg-accent data-[active]:text-accent-foreground",
+);
+
+export function EventDetail({
+  event,
+  isManager,
+}: {
+  event: EventData;
+  isManager: boolean;
+}) {
+  const t = useTranslations("EventDetail");
+  const tState = useTranslations("ConservationState");
+  const tStatus = useTranslations("BookStatus");
+  const router = useRouter();
+  const [error, setError] = useState<string | null>(null);
+  const [cancelDialogOpen, setCancelDialogOpen] = useState(false);
+
+  const isActive = event.status === "ACTIVE";
+
+  const filterBooks = (statuses: readonly string[]) => {
+    return event.books.filter((book) => statuses.includes(book.status));
+  };
+
+  const processingBooks = filterBooks(PROCESSING_STATUSES);
+  const queuedBooks = filterBooks(PRINTING_QUEUED_STATUSES);
+  const printingBooks = filterBooks(PRINTING_IN_PROGRESS_STATUSES);
+  const printedBooks = filterBooks(PRINTING_DONE_STATUSES);
+
+  function refresh() {
+    router.refresh();
+  }
+
+  async function handleDeleteBook(bookId: string) {
+    const res = await deleteBookAction({ bookId });
+    if (res?.error) setError(res.error);
+    else refresh();
+  }
+
+  return (
+    <main className="mx-auto max-w-3xl space-y-6 p-6">
+      <Button
+        variant="ghost"
+        size="sm"
+        className="-ml-2"
+        render={<Link href="/events" />}
+        nativeButton={false}
+      >
+        <ArrowLeft />
+        {t("backToEvents")}
+      </Button>
+      <div className="flex items-center justify-between gap-2">
+        <div className="flex min-w-0 items-center gap-2">
+          {!isActive && (
+            <span className="shrink-0 rounded-full bg-muted px-2 py-0.5 text-xs text-muted-foreground">
+              {t("cancelled")}
+            </span>
+          )}
+          <InlineEdit
+            value={event.title}
+            editable={isManager && isActive}
+            label={t("nameField")}
+            className="text-2xl font-semibold"
+            inputClassName="text-2xl font-semibold"
+            onSave={async (title) => {
+              const res = await updateEventTitleAction({
+                eventId: event.id,
+                title,
+              });
+              if (res?.error) return res.error;
+              refresh();
+              return null;
+            }}
+          />
+        </div>
+        {isManager && isActive && (
+          <>
+            <DropdownMenu>
+              <DropdownMenuTrigger
+                render={
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    aria-label={t("actions")}
+                  />
+                }
+              >
+                <MoreHorizontal />
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem
+                  onClick={() =>
+                    router.push(`/events/${event.id}/template`)
+                  }
+                >
+                  {event.hasTemplate ? t("changeTemplate") : t("newTemplate")}
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => setCancelDialogOpen(true)}>
+                  {t("cancelEvent")}
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+            <AlertDialog
+              open={cancelDialogOpen}
+              onOpenChange={setCancelDialogOpen}
+            >
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>
+                    {t("cancelEventConfirmTitle")}
+                  </AlertDialogTitle>
+                  <AlertDialogDescription>
+                    {t("cancelEventConfirmDescription", { name: event.title })}
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>{t("keep")}</AlertDialogCancel>
+                  <AlertDialogAction
+                    onClick={async () => {
+                      const res = await cancelEventAction({
+                        eventId: event.id,
+                      });
+                      if (res?.error) setError(res.error);
+                      else {
+                        router.push("/events");
+                        router.refresh();
+                      }
+                    }}
+                  >
+                    {t("cancelEvent")}
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
+          </>
+        )}
+      </div>
+
+      {error && <p className="text-sm text-destructive">{error}</p>}
+
+      <Tabs.Root defaultValue="processing" className="flex flex-col gap-4">
+        <Tabs.List className="flex gap-1 border-b">
+          <Tabs.Tab value="processing" className={tabClass}>
+            {t("processingTab")}
+          </Tabs.Tab>
+          <Tabs.Tab value="printing" className={tabClass}>
+            {t("printingTab")}
+          </Tabs.Tab>
+          <Tabs.Tab value="totals" className={tabClass}>
+            {t("totalsTab")}
+          </Tabs.Tab>
+        </Tabs.List>
+
+        <Tabs.Panel value="processing">
+          <ProcessingTab
+            event={event}
+            books={processingBooks}
+            isManager={isManager}
+            isActive={isActive}
+            t={t}
+            tState={tState}
+            tStatus={tStatus}
+            onDelete={handleDeleteBook}
+          />
+        </Tabs.Panel>
+
+        <Tabs.Panel value="printing">
+          <PrintingTab
+            event={event}
+            queuedBooks={queuedBooks}
+            printingBooks={printingBooks}
+            printedBooks={printedBooks}
+            t={t}
+          />
+        </Tabs.Panel>
+
+        <Tabs.Panel value="totals">
+          <TotalsTab
+            event={event}
+            books={event.books}
+            t={t}
+            tState={tState}
+          />
+        </Tabs.Panel>
+      </Tabs.Root>
+
+      {isActive && <AddBookDrawer eventId={event.id} />}
+    </main>
+  );
+}
