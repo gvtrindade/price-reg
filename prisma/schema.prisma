@@ -102,7 +102,7 @@ model Event {
   createdAt DateTime    @default(now()) @db.Timestamptz
   updatedAt DateTime    @updatedAt @db.Timestamptz
 
-  books          Book[]
+  products          Product[]
   eventUsers     EventUser[]
   printTemplate  PrintTemplate?
 
@@ -120,11 +120,11 @@ model EventUser {
   @@map("event_user")
 }
 
-model Book {
+model Product {
   id                String   @id @default(cuid())
   title             String?
   author            String?
-  isbn              String?
+  code              String?
   conservationState String   @map("conservation_state")
   status            String
   price             Decimal? @db.Decimal(10, 2)
@@ -135,7 +135,7 @@ model Book {
   eventId String
   event   Event  @relation(fields: [eventId], references: [id], onDelete: Cascade)
 
-  @@map("book")
+  @@map("product")
 }
 
 model PrintTemplate {

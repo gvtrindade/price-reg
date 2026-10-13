@@ -7,7 +7,7 @@ import { NextResponse } from "next/server";
 interface ValuationPayload {
   title?: unknown;
   author?: unknown;
-  isbn?: unknown;
+  code?: unknown;
   conservation_state?: unknown;
   estimated_value?: unknown;
   status?: unknown;
@@ -28,17 +28,17 @@ function cleanPrice(value: unknown): number | null {
 
 export async function POST(request: NextRequest) {
   const { searchParams } = request.nextUrl;
-  const bookId = searchParams.get("bookId");
+  const productId = searchParams.get("productId");
   const eventId = searchParams.get("eventId");
   const token = searchParams.get("token");
 
-  if (!bookId || !eventId) {
+  if (!productId || !eventId) {
     return NextResponse.json(
-      { error: "bookId and eventId are required" },
+      { error: "productId and eventId are required" },
       { status: 400 },
     );
   }
-  if (!verifyWebhookToken(bookId, eventId, token)) {
+  if (!verifyWebhookToken(productId, eventId, token)) {
     return NextResponse.json({ error: "invalid token" }, { status: 401 });
   }
 
@@ -51,29 +51,29 @@ export async function POST(request: NextRequest) {
 
   const title = cleanText(payload.title);
   const author = cleanText(payload.author);
-  const isbn = cleanText(payload.isbn);
+  const code = cleanText(payload.code);
   const estimatedValue = cleanPrice(payload.estimated_value);
   const status = cleanText(payload.status);
   const errorMessage = cleanText(payload.error);
   const isError = status === "error";
   const isNotFound = status === "not_found";
 
-  const book = await prisma.book.findUnique({ where: { id: bookId } });
-  if (!book) {
+  const product = await prisma.product.findUnique({ where: { id: productId } });
+  if (!product) {
     // The service delivers its webhook while the registering request is still
     // in flight. Without a valuation or error there is nothing worth persisting yet:
     // the registering action creates the row itself.
     if (estimatedValue === null && !isError && !isNotFound) {
-      return NextResponse.json({ error: "book not found" }, { status: 404 });
+      return NextResponse.json({ error: "product not found" }, { status: 404 });
     }
     try {
-      await prisma.book.create({
+      await prisma.product.create({
         data: {
-          id: bookId,
+          id: productId,
           eventId,
           title,
           author,
-          isbn,
+          code,
           conservationState: cleanText(payload.conservation_state) ?? "unknown",
           status: isError ? "error" : isNotFound ? "not_found" : "registered",
           price: estimatedValue,
@@ -81,7 +81,7 @@ export async function POST(request: NextRequest) {
         },
       });
       if (isError && errorMessage) {
-        console.error(`Book valuation error for ${bookId}: ${errorMessage}`);
+        console.error(`Product valuation error for ${productId}: ${errorMessage}`);
       }
       return NextResponse.json({ ok: true });
     } catch (e) {
@@ -95,14 +95,14 @@ export async function POST(request: NextRequest) {
     }
   }
 
-  const target = book ?? (await prisma.book.findUnique({ where: { id: bookId } }));
-  if (!target) return NextResponse.json({ error: "book not found" }, { status: 404 });
+  const target = product ?? (await prisma.product.findUnique({ where: { id: productId } }));
+  if (!target) return NextResponse.json({ error: "product not found" }, { status: 404 });
 
-  const data: Prisma.BookUpdateInput = {};
+  const data: Prisma.ProductUpdateInput = {};
   if (isError) {
     data.status = "error";
     if (errorMessage) {
-      console.error(`Book valuation error for ${bookId}: ${errorMessage}`);
+      console.error(`Product valuation error for ${productId}: ${errorMessage}`);
     }
   } else if (isNotFound) {
     data.status = "not_found";
@@ -118,10 +118,10 @@ export async function POST(request: NextRequest) {
   }
   if (title && title !== target.title) data.title = title;
   if (author && author !== target.author) data.author = author;
-  if (isbn && isbn !== target.isbn) data.isbn = isbn;
+  if (code && code !== target.code) data.code = code;
 
   if (Object.keys(data).length > 0) {
-    await prisma.book.update({ where: { id: bookId }, data });
+    await prisma.product.update({ where: { id: productId }, data });
   }
   return NextResponse.json({ ok: true });
 }

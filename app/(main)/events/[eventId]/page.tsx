@@ -19,13 +19,13 @@ export default async function EventDetailPage({
   const event = await prisma.event.findUnique({
     where: { id: eventId },
     include: {
-      books: {
+      products: {
         orderBy: { createdAt: "desc" },
         select: {
           id: true,
           title: true,
           author: true,
-          isbn: true,
+          code: true,
           conservationState: true,
           status: true,
           price: true,
@@ -45,9 +45,9 @@ export default async function EventDetailPage({
         title: event.title,
         status: event.status,
         hasTemplate: event.printTemplate !== null,
-        books: event.books.map((book) => ({
-          ...book,
-          price: book.price === null ? null : String(book.price),
+        products: event.products.map((product) => ({
+          ...product,
+          price: product.price === null ? null : String(product.price),
         })),
       }}
       isManager={isManager}

@@ -1,31 +1,31 @@
 "use client";
 
-import { BookRow, EventData, CONSERVATION_LABELS } from "./event-detail";
+import { ProductRow, EventData, CONSERVATION_LABELS } from "./event-detail";
 import { Input } from "@/components/ui/input";
 import Link from "next/link";
 import { useState } from "react";
 
 export function TotalsTab({
   event,
-  books,
+  products,
   t,
   tState,
 }: {
   event: EventData;
-  books: BookRow[];
+  products: ProductRow[];
   t: (key: string, values?: Record<string, string | number>) => string;
   tState: (key: "asNew" | "nearFine" | "good" | "fair") => string;
 }) {
   const [search, setSearch] = useState("");
 
   const query = search.trim().toLowerCase();
-  const totalsBooks = query
-    ? books.filter(
-        (book) =>
-          (book.title ?? "").toLowerCase().includes(query) ||
-          (book.author ?? "").toLowerCase().includes(query),
+  const totalsProducts = query
+    ? products.filter(
+        (product) =>
+          (product.title ?? "").toLowerCase().includes(query) ||
+          (product.author ?? "").toLowerCase().includes(query),
       )
-    : books;
+    : products;
 
   return (
     <div className="space-y-3">
@@ -36,35 +36,35 @@ export function TotalsTab({
         aria-label={t("searchPlaceholder")}
       />
       <div className="flex items-center justify-between gap-4">
-        <h2 className="text-xl font-semibold">{t("books")}</h2>
+        <h2 className="text-xl font-semibold">{t("products")}</h2>
         <span className="text-sm text-muted-foreground">
-          {t("bookCount", { count: totalsBooks.length })}
+          {t("productCount", { count: totalsProducts.length })}
         </span>
       </div>
-      {totalsBooks.length === 0 ? (
+      {totalsProducts.length === 0 ? (
         <p className="text-sm text-muted-foreground">
-          {books.length === 0 ? t("noBooks") : t("noResults")}
+          {products.length === 0 ? t("noProducts") : t("noResults")}
         </p>
       ) : (
         <>
           <ul className="divide-y rounded-lg border">
-            {totalsBooks.map((book) => (
+            {totalsProducts.map((product) => (
               <li
-                key={book.id}
+                key={product.id}
                 className="flex items-center gap-4 p-4 transition-colors hover:bg-accent/50"
               >
                 <Link
-                  href={`/events/${event.id}/books/${book.id}`}
+                  href={`/events/${event.id}/products/${product.id}`}
                   className="flex min-w-0 flex-1 items-center gap-4 outline-none focus-visible:ring-3 focus-visible:ring-ring/50 rounded-lg -m-2 p-2"
                 >
                   <div className="min-w-0 flex-1">
                     <p className="truncate font-medium">
-                      {book.title ?? book.isbn ?? "—"}
+                      {product.title ?? product.code ?? "—"}
                     </p>
                     <p className="text-sm text-muted-foreground">
                       {tState(
-                        (CONSERVATION_LABELS[book.conservationState] ??
-                          book.conservationState) as
+                        (CONSERVATION_LABELS[product.conservationState] ??
+                          product.conservationState) as
                           | "asNew"
                           | "nearFine"
                           | "good"
@@ -73,7 +73,7 @@ export function TotalsTab({
                     </p>
                   </div>
                   <span className="shrink-0 text-sm tabular-nums">
-                    {book.price ?? "—"}
+                    {product.price ?? "—"}
                   </span>
                 </Link>
               </li>
@@ -82,9 +82,9 @@ export function TotalsTab({
           <div className="flex items-center justify-between gap-4 rounded-lg border p-4">
             <span className="font-medium">{t("totalValue")}</span>
             <span className="text-sm tabular-nums">
-              {totalsBooks
-                .reduce((sum, book) => {
-                  const price = parseFloat(book.price ?? "0");
+              {totalsProducts
+                .reduce((sum, product) => {
+                  const price = parseFloat(product.price ?? "0");
                   return sum + (isNaN(price) ? 0 : price);
                 }, 0)
                 .toFixed(2)}

@@ -1,6 +1,6 @@
 "use client";
 
-import { addBookAction } from "@/actions/events";
+import { addProductAction } from "@/actions/events";
 import { Button } from "@/components/ui/button";
 import {
   Drawer,
@@ -19,7 +19,7 @@ const CONSERVATION_OPTIONS = [
   { value: "Good (G)", labelKey: "good" },
   { value: "Fair", labelKey: "fair" },
 ] as const;
-import { BookScanner } from "./book-scanner";
+import { ProductScanner } from "./product-scanner";
 import { Hand, Plus, ScanLine } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
@@ -27,15 +27,15 @@ import { useState } from "react";
 
 type Step = "options" | "manual" | "scan" | "confirm";
 
-export function AddBookDrawer({ eventId }: { eventId: string }) {
-  const t = useTranslations("AddBookDrawer");
+export function AddProductDrawer({ eventId }: { eventId: string }) {
+  const t = useTranslations("AddProductDrawer");
   const tState = useTranslations("ConservationState");
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [step, setStep] = useState<Step>("options");
   const [title, setTitle] = useState("");
   const [author, setAuthor] = useState("");
-  const [isbn, setIsbn] = useState("");
+  const [code, setCode] = useState("");
   const [conservationState, setConservationState] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
@@ -45,7 +45,7 @@ export function AddBookDrawer({ eventId }: { eventId: string }) {
     setStep("options");
     setTitle("");
     setAuthor("");
-    setIsbn("");
+    setCode("");
     setConservationState("");
     setError(null);
     setPending(false);
@@ -53,9 +53,9 @@ export function AddBookDrawer({ eventId }: { eventId: string }) {
 
   function requestSubmit() {
     const hasTitle = !!title.trim();
-    const hasIsbn = !!isbn.trim();
-    if (!hasTitle && !hasIsbn) {
-      setError(t("nameOrIsbnRequired"));
+    const hasCode = !!code.trim();
+    if (!hasTitle && !hasCode) {
+      setError(t("nameOrCodeRequired"));
       return;
     }
     if (hasTitle && !author.trim()) {
@@ -73,11 +73,11 @@ export function AddBookDrawer({ eventId }: { eventId: string }) {
   async function confirm() {
     setPending(true);
     setError(null);
-    const res = await addBookAction({
+    const res = await addProductAction({
       eventId,
       title,
       author,
-      isbn,
+      code,
       conservationState,
     });
     setPending(false);
@@ -90,14 +90,14 @@ export function AddBookDrawer({ eventId }: { eventId: string }) {
     router.refresh();
   }
 
-  const displayName = title.trim() || isbn.trim();
+  const displayName = title.trim() || code.trim();
 
   return (
     <Drawer open={open} onOpenChange={(o) => (o ? setOpen(true) : close())}>
       <Button
         size="icon-lg"
         className="fixed bottom-4 left-4 z-30 rounded-full shadow-lg"
-        aria-label={t("addBook")}
+        aria-label={t("addProduct")}
         onClick={() => setOpen(true)}
       >
         <Plus />
@@ -143,9 +143,9 @@ export function AddBookDrawer({ eventId }: { eventId: string }) {
               <DrawerDescription>{t("scanHint")}</DrawerDescription>
             </DrawerHeader>
             <div className="p-4">
-              <BookScanner
-                onDetected={(isbn) => {
-                  setIsbn(isbn);
+              <ProductScanner
+                onDetected={(code) => {
+                  setCode(code);
                   setError(null);
                   setStep("manual");
                 }}
@@ -178,21 +178,21 @@ export function AddBookDrawer({ eventId }: { eventId: string }) {
             </DrawerHeader>
             <div className="space-y-4 p-4">
               <div className="space-y-2">
-                <Label htmlFor="book-title">{t("nameField")}</Label>
+                <Label htmlFor="product-title">{t("nameField")}</Label>
                 <Input
-                  id="book-title"
+                  id="product-title"
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
                   placeholder={t("namePlaceholder")}
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="book-author">
+                <Label htmlFor="product-author">
                   {t("authorField")}
                   {title.trim() ? " *" : ""}
                 </Label>
                 <Input
-                  id="book-author"
+                  id="product-author"
                   value={author}
                   onChange={(e) => setAuthor(e.target.value)}
                   placeholder={t("authorPlaceholder")}
@@ -200,21 +200,21 @@ export function AddBookDrawer({ eventId }: { eventId: string }) {
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="book-isbn">{t("isbnField")}</Label>
+                <Label htmlFor="product-code">{t("codeField")}</Label>
                 <Input
-                  id="book-isbn"
-                  value={isbn}
-                  onChange={(e) => setIsbn(e.target.value)}
-                  placeholder={t("isbnPlaceholder")}
+                  id="product-code"
+                  value={code}
+                  onChange={(e) => setCode(e.target.value)}
+                  placeholder={t("codePlaceholder")}
                   inputMode="numeric"
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="book-conservation">
+                <Label htmlFor="product-conservation">
                   {t("conservationState")} *
                 </Label>
                 <select
-                  id="book-conservation"
+                  id="product-conservation"
                   value={conservationState}
                   onChange={(e) => setConservationState(e.target.value)}
                   aria-invalid={!!error}

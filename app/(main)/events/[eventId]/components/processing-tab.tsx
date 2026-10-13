@@ -1,6 +1,6 @@
 "use client";
 
-import { BookRow, EventData, CONSERVATION_LABELS } from "./event-detail";
+import { ProductRow, EventData, CONSERVATION_LABELS } from "./event-detail";
 import { InlineEdit } from "@/components/inline-edit";
 import {
   AlertDialog,
@@ -15,14 +15,14 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import {
-  BOOK_STATUS_LABEL_KEYS,
-  BookStatus,
-} from "@/lib/book-status";
+  PRODUCT_STATUS_LABEL_KEYS,
+  ProductStatus,
+} from "@/lib/product-status";
 import Link from "next/link";
 import { Trash2 } from "lucide-react";
 
-function BookListItem({
-  book,
+function ProductListItem({
+  product,
   event,
   isManager,
   isActive,
@@ -31,31 +31,31 @@ function BookListItem({
   tStatus,
   onDelete,
 }: {
-  book: BookRow;
+  product: ProductRow;
   event: EventData;
   isManager: boolean;
   isActive: boolean;
   t: (key: string, values?: Record<string, string | number>) => string;
   tState: (key: "asNew" | "nearFine" | "good" | "fair") => string;
   tStatus: (key: "registered" | "error" | "notFound" | "queued" | "printing" | "printed") => string;
-  onDelete: (bookId: string) => void;
+  onDelete: (productId: string) => void;
 }) {
-  const statusKey = BOOK_STATUS_LABEL_KEYS[book.status as BookStatus];
+  const statusKey = PRODUCT_STATUS_LABEL_KEYS[product.status as ProductStatus];
   return (
     <li className="relative flex items-center gap-4 p-4 transition-colors hover:bg-accent/50">
       <Link
-        href={`/events/${event.id}/books/${book.id}`}
-        aria-label={t("openBook")}
+        href={`/events/${event.id}/products/${product.id}`}
+        aria-label={t("openProduct")}
         className="absolute inset-0 rounded-lg outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
       />
       <div className="min-w-0 flex-1">
         <p className="truncate font-medium">
-          {book.title ?? book.isbn ?? "—"}
+          {product.title ?? product.code ?? "—"}
         </p>
         <p className="text-sm text-muted-foreground">
           {tState(
-            (CONSERVATION_LABELS[book.conservationState] ??
-              book.conservationState) as
+            (CONSERVATION_LABELS[product.conservationState] ??
+              product.conservationState) as
               | "asNew"
               | "nearFine"
               | "good"
@@ -64,11 +64,11 @@ function BookListItem({
           ·{" "}
           {statusKey
             ? tStatus(statusKey as "registered" | "error" | "notFound" | "queued" | "printing" | "printed")
-            : book.status}
+            : product.status}
         </p>
       </div>
       <span className="shrink-0 text-sm tabular-nums">
-        {book.price ?? "—"}
+        {product.price ?? "—"}
       </span>
       {isManager && isActive && (
         <div className="relative z-10 flex shrink-0 items-center gap-1">
@@ -78,7 +78,7 @@ function BookListItem({
                 <Button
                   variant="ghost"
                   size="icon-sm"
-                  aria-label={t("deleteBook")}
+                  aria-label={t("deleteProduct")}
                 />
               }
             >
@@ -87,18 +87,18 @@ function BookListItem({
             <AlertDialogContent>
               <AlertDialogHeader>
                 <AlertDialogTitle>
-                  {t("deleteBookConfirmTitle")}
+                  {t("deleteProductConfirmTitle")}
                 </AlertDialogTitle>
                 <AlertDialogDescription>
-                  {t("deleteBookConfirmDescription", {
-                    name: book.title ?? book.isbn ?? "",
+                  {t("deleteProductConfirmDescription", {
+                    name: product.title ?? product.code ?? "",
                   })}
                 </AlertDialogDescription>
               </AlertDialogHeader>
               <AlertDialogFooter>
                 <AlertDialogCancel>{t("keep")}</AlertDialogCancel>
                 <AlertDialogAction
-                  onClick={() => onDelete(book.id)}
+                  onClick={() => onDelete(product.id)}
                 >
                   {t("delete")}
                 </AlertDialogAction>
@@ -111,8 +111,8 @@ function BookListItem({
   );
 }
 
-function BookList({
-  books,
+function ProductList({
+  products,
   event,
   isManager,
   isActive,
@@ -121,22 +121,22 @@ function BookList({
   tStatus,
   onDelete,
 }: {
-  books: BookRow[];
+  products: ProductRow[];
   event: EventData;
   isManager: boolean;
   isActive: boolean;
   t: (key: string, values?: Record<string, string | number>) => string;
   tState: (key: "asNew" | "nearFine" | "good" | "fair") => string;
   tStatus: (key: "registered" | "error" | "notFound" | "queued" | "printing" | "printed") => string;
-  onDelete: (bookId: string) => void;
+  onDelete: (productId: string) => void;
 }) {
-  if (books.length === 0) return null;
+  if (products.length === 0) return null;
   return (
     <ul className="divide-y rounded-lg border">
-      {books.map((book) => (
-        <BookListItem
-          key={book.id}
-          book={book}
+      {products.map((product) => (
+        <ProductListItem
+          key={product.id}
+          product={product}
           event={event}
           isManager={isManager}
           isActive={isActive}
@@ -152,7 +152,7 @@ function BookList({
 
 export function ProcessingTab({
   event,
-  books,
+  products,
   isManager,
   isActive,
   t,
@@ -161,29 +161,29 @@ export function ProcessingTab({
   onDelete,
 }: {
   event: EventData;
-  books: BookRow[];
+  products: ProductRow[];
   isManager: boolean;
   isActive: boolean;
   t: (key: string, values?: Record<string, string | number>) => string;
   tState: (key: "asNew" | "nearFine" | "good" | "fair") => string;
   tStatus: (key: "registered" | "error" | "notFound" | "queued" | "printing" | "printed") => string;
-  onDelete: (bookId: string) => void;
+  onDelete: (productId: string) => void;
 }) {
   return (
     <div className="space-y-3">
       <div className="flex items-center justify-between gap-4">
-        <h2 className="text-xl font-semibold">{t("books")}</h2>
+        <h2 className="text-xl font-semibold">{t("products")}</h2>
         <span className="text-sm text-muted-foreground">
-          {t("bookCount", { count: books.length })}
+          {t("productCount", { count: products.length })}
         </span>
       </div>
-      {books.length === 0 ? (
+      {products.length === 0 ? (
         <p className="text-sm text-muted-foreground">
-          {event.books.length === 0 ? t("noBooks") : t("noResults")}
+          {event.products.length === 0 ? t("noProducts") : t("noResults")}
         </p>
       ) : (
-        <BookList
-          books={books}
+        <ProductList
+          products={products}
           event={event}
           isManager={isManager}
           isActive={isActive}

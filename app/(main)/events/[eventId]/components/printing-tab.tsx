@@ -1,7 +1,7 @@
 "use client";
 
-import { BookRow, EventData } from "./event-detail";
-import { printBooksAction, updateBookAction } from "@/actions/events";
+import { ProductRow, EventData } from "./event-detail";
+import { printProductsAction, updateProductAction } from "@/actions/events";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -17,23 +17,23 @@ import {
   DrawerDescription,
   DrawerFooter,
 } from "@/components/ui/drawer";
-import { BookStatus } from "@/lib/book-status";
+import { ProductStatus } from "@/lib/product-status";
 import { Ellipsis, Printer } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCallback, useState } from "react";
 
-function QueuedBookListItem({
-  book,
+function QueuedProductListItem({
+  product,
   event,
   selected,
   onToggle,
   t,
 }: {
-  book: BookRow;
+  product: ProductRow;
   event: EventData;
   selected: boolean;
-  onToggle: (bookId: string) => void;
+  onToggle: (productId: string) => void;
   t: (key: string, values?: Record<string, string | number>) => string;
 }) {
   return (
@@ -42,53 +42,53 @@ function QueuedBookListItem({
         <input
           type="checkbox"
           checked={selected}
-          onChange={() => onToggle(book.id)}
+          onChange={() => onToggle(product.id)}
           className="h-4 w-4 rounded border-gray-300 accent-primary"
         />
       </div>
       <Link
-        href={`/events/${event.id}/books/${book.id}`}
-        aria-label={t("openBook")}
+        href={`/events/${event.id}/products/${product.id}`}
+        aria-label={t("openProduct")}
         className="absolute inset-0 rounded-lg pl-12 outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
       />
       <p className="min-w-0 flex-1 truncate font-medium">
-        {book.title ?? book.isbn ?? "—"}
+        {product.title ?? product.code ?? "—"}
       </p>
     </li>
   );
 }
 
-function PrintBookListItem({
-  book,
+function PrintProductListItem({
+  product,
   event,
 }: {
-  book: BookRow;
+  product: ProductRow;
   event: EventData;
 }) {
   return (
     <li className="flex items-center p-4 transition-colors hover:bg-accent/50">
       <Link
-        href={`/events/${event.id}/books/${book.id}`}
+        href={`/events/${event.id}/products/${product.id}`}
         className="block w-full outline-none focus-visible:ring-3 focus-visible:ring-ring/50 rounded-lg -m-2 p-2"
       >
         <p className="truncate font-medium">
-          {book.title ?? book.isbn ?? "—"}
+          {product.title ?? product.code ?? "—"}
         </p>
       </Link>
     </li>
   );
 }
 
-function PrintBookListItemWithMenu({
-  book,
+function PrintProductListItemWithMenu({
+  product,
   event,
   t,
   onStopPrint,
 }: {
-  book: BookRow;
+  product: ProductRow;
   event: EventData;
   t: (key: string, values?: Record<string, string | number>) => string;
-  onStopPrint: (bookId: string) => void;
+  onStopPrint: (productId: string) => void;
 }) {
   const [menuOpen, setMenuOpen] = useState(false);
   const [drawerOpen, setDrawerOpen] = useState(false);
@@ -96,11 +96,11 @@ function PrintBookListItemWithMenu({
   return (
     <li className="relative flex items-center p-4 transition-colors hover:bg-accent/50">
       <Link
-        href={`/events/${event.id}/books/${book.id}`}
+        href={`/events/${event.id}/products/${product.id}`}
         className="block min-w-0 flex-1 outline-none focus-visible:ring-3 focus-visible:ring-ring/50 rounded-lg -m-2 p-2"
       >
         <p className="truncate font-medium">
-          {book.title ?? book.isbn ?? "—"}
+          {product.title ?? product.code ?? "—"}
         </p>
       </Link>
       <div className="relative z-10 flex shrink-0 items-center">
@@ -128,7 +128,7 @@ function PrintBookListItemWithMenu({
               <DrawerTitle>{t("stopPrintConfirmTitle")}</DrawerTitle>
               <DrawerDescription>
                 {t("stopPrintConfirmDescription", {
-                  name: book.title ?? book.isbn ?? "",
+                  name: product.title ?? product.code ?? "",
                 })}
               </DrawerDescription>
             </DrawerHeader>
@@ -141,7 +141,7 @@ function PrintBookListItemWithMenu({
               </Button>
               <Button
                 onClick={() => {
-                  onStopPrint(book.id);
+                  onStopPrint(product.id);
                   setDrawerOpen(false);
                 }}
               >
@@ -155,33 +155,33 @@ function PrintBookListItemWithMenu({
   );
 }
 
-function PrintBookList({
-  books,
+function PrintProductList({
+  products,
   event,
   t,
   onStopPrint,
   showMenu,
 }: {
-  books: BookRow[];
+  products: ProductRow[];
   event: EventData;
   t: (key: string, values?: Record<string, string | number>) => string;
-  onStopPrint: (bookId: string) => void;
+  onStopPrint: (productId: string) => void;
   showMenu: boolean;
 }) {
-  if (books.length === 0) return null;
+  if (products.length === 0) return null;
   return (
     <ul className="divide-y rounded-lg border">
-      {books.map((book) =>
+      {products.map((product) =>
         showMenu ? (
-          <PrintBookListItemWithMenu
-            key={book.id}
-            book={book}
+          <PrintProductListItemWithMenu
+            key={product.id}
+            product={product}
             event={event}
             t={t}
             onStopPrint={onStopPrint}
           />
         ) : (
-          <PrintBookListItem key={book.id} book={book} event={event} />
+          <PrintProductListItem key={product.id} product={product} event={event} />
         )
       )}
     </ul>
@@ -190,54 +190,54 @@ function PrintBookList({
 
 export function PrintingTab({
   event,
-  queuedBooks,
-  printingBooks,
-  printedBooks,
+  queuedProducts,
+  printingProducts,
+  printedProducts,
   t,
 }: {
   event: EventData;
-  queuedBooks: BookRow[];
-  printingBooks: BookRow[];
-  printedBooks: BookRow[];
+  queuedProducts: ProductRow[];
+  printingProducts: ProductRow[];
+  printedProducts: ProductRow[];
   t: (key: string, values?: Record<string, string | number>) => string;
 }) {
   const router = useRouter();
   const [error, setError] = useState<string | null>(null);
-  const [selectedBookIds, setSelectedBookIds] = useState<Set<string>>(new Set());
+  const [selectedProductIds, setSelectedProductIds] = useState<Set<string>>(new Set());
   const [isPrinting, setIsPrinting] = useState(false);
 
   function refresh() {
     router.refresh();
   }
 
-  const toggleBookSelection = useCallback((bookId: string) => {
-    setSelectedBookIds((prev) => {
+  const toggleProductSelection = useCallback((productId: string) => {
+    setSelectedProductIds((prev) => {
       const next = new Set(prev);
-      if (next.has(bookId)) next.delete(bookId);
-      else next.add(bookId);
+      if (next.has(productId)) next.delete(productId);
+      else next.add(productId);
       return next;
     });
   }, []);
 
   async function handlePrint() {
-    if (selectedBookIds.size === 0) return;
+    if (selectedProductIds.size === 0) return;
     setIsPrinting(true);
     setError(null);
-    const res = await printBooksAction({
+    const res = await printProductsAction({
       eventId: event.id,
-      bookIds: Array.from(selectedBookIds),
+      productIds: Array.from(selectedProductIds),
     });
     if (res?.error) setError(res.error);
     else {
-      setSelectedBookIds(new Set());
+      setSelectedProductIds(new Set());
       refresh();
     }
     setIsPrinting(false);
   }
 
-  async function handleStopPrint(bookId: string) {
+  async function handleStopPrint(productId: string) {
     setError(null);
-    const res = await updateBookAction({ bookId, status: BookStatus.QUEUED });
+    const res = await updateProductAction({ productId, status: ProductStatus.QUEUED });
     if (res?.error) setError(res.error);
     else refresh();
   }
@@ -251,23 +251,23 @@ export function PrintingTab({
           <Button
             size="sm"
             onClick={handlePrint}
-            disabled={selectedBookIds.size === 0 || isPrinting}
+            disabled={selectedProductIds.size === 0 || isPrinting}
           >
             <Printer />
             {isPrinting ? t("printing") : t("print")}
           </Button>
         </div>
-        {queuedBooks.length === 0 ? (
-          <p className="text-sm text-muted-foreground">{t("noBooks")}</p>
+        {queuedProducts.length === 0 ? (
+          <p className="text-sm text-muted-foreground">{t("noProducts")}</p>
         ) : (
           <ul className="divide-y rounded-lg border">
-            {queuedBooks.map((book) => (
-              <QueuedBookListItem
-                key={book.id}
-                book={book}
+            {queuedProducts.map((product) => (
+              <QueuedProductListItem
+                key={product.id}
+                product={product}
                 event={event}
-                selected={selectedBookIds.has(book.id)}
-                onToggle={toggleBookSelection}
+                selected={selectedProductIds.has(product.id)}
+                onToggle={toggleProductSelection}
                 t={t}
               />
             ))}
@@ -277,11 +277,11 @@ export function PrintingTab({
 
       <section className="space-y-3">
         <h2 className="text-xl font-semibold">{t("printing")}</h2>
-        {printingBooks.length === 0 ? (
-          <p className="text-sm text-muted-foreground">{t("noBooks")}</p>
+        {printingProducts.length === 0 ? (
+          <p className="text-sm text-muted-foreground">{t("noProducts")}</p>
         ) : (
-          <PrintBookList
-            books={printingBooks}
+          <PrintProductList
+            products={printingProducts}
             event={event}
             t={t}
             onStopPrint={handleStopPrint}
@@ -294,14 +294,14 @@ export function PrintingTab({
         <div className="flex items-center justify-between gap-4">
           <h2 className="text-xl font-semibold">{t("printed")}</h2>
           <span className="text-sm text-muted-foreground">
-            {t("bookCount", { count: printedBooks.length })}
+            {t("productCount", { count: printedProducts.length })}
           </span>
         </div>
-        {printedBooks.length === 0 ? (
-          <p className="text-sm text-muted-foreground">{t("noBooks")}</p>
+        {printedProducts.length === 0 ? (
+          <p className="text-sm text-muted-foreground">{t("noProducts")}</p>
         ) : (
-          <PrintBookList
-            books={printedBooks}
+          <PrintProductList
+            products={printedProducts}
             event={event}
             t={t}
             onStopPrint={handleStopPrint}

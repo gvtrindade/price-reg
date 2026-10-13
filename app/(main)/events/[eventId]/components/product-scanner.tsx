@@ -24,7 +24,7 @@ function getBarcodeDetector(): BarcodeDetectorConstructor | undefined {
     .BarcodeDetector;
 }
 
-const ISBN_FORMATS = ["ean_13", "ean_8", "upc_a", "upc_e"];
+const CODE_FORMATS = ["ean_13", "ean_8", "upc_a", "upc_e"];
 const DEFAULT_CAMERA_KEY = "scanner.defaultCameraId";
 
 async function supportedCheck(
@@ -32,7 +32,7 @@ async function supportedCheck(
 ): Promise<boolean> {
   try {
     const formats = await Detector.getSupportedFormats?.();
-    if (formats && !formats.some((f) => ISBN_FORMATS.includes(f))) {
+    if (formats && !formats.some((f) => CODE_FORMATS.includes(f))) {
       return false;
     }
   } catch {
@@ -41,14 +41,14 @@ async function supportedCheck(
   return true;
 }
 
-export function BookScanner({
+export function ProductScanner({
   onDetected,
   onManualFallback,
 }: {
-  onDetected: (isbn: string) => void;
+  onDetected: (code: string) => void;
   onManualFallback: () => void;
 }) {
-  const t = useTranslations("BookScanner");
+  const t = useTranslations("ProductScanner");
   const videoRef = useRef<HTMLVideoElement>(null);
   const [status, setStatus] = useState<
     "idle" | "starting" | "scanning" | "unsupported" | "error"
@@ -119,7 +119,7 @@ export function BookScanner({
         /* camera list unavailable */
       }
 
-      detector = new Detector({ formats: ISBN_FORMATS });
+      detector = new Detector({ formats: CODE_FORMATS });
       setStatus("scanning");
 
       interval = setInterval(async () => {

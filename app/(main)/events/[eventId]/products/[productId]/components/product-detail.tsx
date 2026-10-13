@@ -1,12 +1,12 @@
 "use client";
 
-import { deleteBookAction, reprocessBookAction, updateBookAction } from "@/actions/events";
+import { deleteProductAction, reprocessProductAction, updateProductAction } from "@/actions/events";
 import { InlineEdit } from "@/components/inline-edit";
 import {
-  BOOK_STATUS_LABEL_KEYS,
-  EDITABLE_BOOK_STATUSES,
-  BookStatus,
-} from "@/lib/book-status";
+  PRODUCT_STATUS_LABEL_KEYS,
+  EDITABLE_PRODUCT_STATUSES,
+  ProductStatus,
+} from "@/lib/product-status";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -38,37 +38,37 @@ const CONSERVATION_OPTIONS = [
   { value: "Fair", labelKey: "fair" },
 ] as const;
 
-const STATUS_OPTIONS = EDITABLE_BOOK_STATUSES.map((value) => ({
+const STATUS_OPTIONS = EDITABLE_PRODUCT_STATUSES.map((value) => ({
   value,
-  labelKey: BOOK_STATUS_LABEL_KEYS[value as BookStatus],
+  labelKey: PRODUCT_STATUS_LABEL_KEYS[value as ProductStatus],
 }));
 
-interface BookData {
+interface ProductData {
   id: string;
   title: string | null;
   author: string | null;
-  isbn: string | null;
+  code: string | null;
   conservationState: string;
   status: string;
   price: string | null;
 }
 
-export function BookDetail({
-  book,
+export function ProductDetail({
+  product,
   eventId,
   eventActive,
   isManager,
   canReprocess,
 }: {
-  book: BookData;
+  product: ProductData;
   eventId: string;
   eventActive: boolean;
   isManager: boolean;
   canReprocess: boolean;
 }) {
-  const t = useTranslations("BookDetail");
+  const t = useTranslations("ProductDetail");
   const tState = useTranslations("ConservationState");
-  const tStatus = useTranslations("BookStatus");
+  const tStatus = useTranslations("ProductStatus");
   const router = useRouter();
   const [error, setError] = useState<string | null>(null);
   const [deleteOpen, setDeleteOpen] = useState(false);
@@ -81,7 +81,7 @@ export function BookDetail({
   ) {
     return async (value: string) => {
       setError(null);
-      const res = await updateBookAction({ bookId: book.id, [field]: value });
+      const res = await updateProductAction({ productId: product.id, [field]: value });
       if (res?.error) return res.error;
       router.refresh();
       return null;
@@ -106,7 +106,7 @@ export function BookDetail({
       <div className="flex items-center justify-between gap-2">
         <h1 className="min-w-0 flex-1">
           <InlineEdit
-            value={book.title ?? ""}
+            value={product.title ?? ""}
             placeholder={t("unnamed")}
             editable={canEdit}
             label={t("title")}
@@ -132,7 +132,7 @@ export function BookDetail({
                   onClick={async () => {
                     setError(null);
                     setReprocessing(true);
-                    const res = await reprocessBookAction({ bookId: book.id });
+                    const res = await reprocessProductAction({ productId: product.id });
                     setReprocessing(false);
                     if (res?.error) setError(res.error);
                     else router.refresh();
@@ -143,7 +143,7 @@ export function BookDetail({
                 </DropdownMenuItem>
               )}
               <DropdownMenuItem onClick={() => setDeleteOpen(true)}>
-                {t("deleteBook")}
+                {t("deleteProduct")}
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
@@ -153,14 +153,14 @@ export function BookDetail({
       {error && <p className="text-sm text-destructive">{error}</p>}
 
       <dl className="space-y-1 rounded-lg border">
-        <Field label={t("isbn")}>
+        <Field label={t("code")}>
           <span className="text-sm tabular-nums">
-            {book.isbn || <span className="text-muted-foreground">—</span>}
+            {product.code || <span className="text-muted-foreground">—</span>}
           </span>
         </Field>
         <Field label={t("author")}>
           <InlineEdit
-            value={book.author ?? ""}
+            value={product.author ?? ""}
             placeholder={t("unknownAuthor")}
             editable={canEdit}
             label={t("author")}
@@ -170,7 +170,7 @@ export function BookDetail({
         </Field>
         <Field label={t("price")}>
           <InlineEdit
-            value={book.price ?? ""}
+            value={product.price ?? ""}
             placeholder={t("notPriced")}
             editable={canEdit}
             label={t("price")}
@@ -181,7 +181,7 @@ export function BookDetail({
         </Field>
         <Field label={t("conservationState")}>
           <InlineEdit
-            value={book.conservationState}
+            value={product.conservationState}
             editable={canEdit}
             label={t("conservationState")}
             onSave={save("conservationState")}
@@ -194,7 +194,7 @@ export function BookDetail({
         </Field>
         <Field label={t("status")}>
           <InlineEdit
-            value={book.status}
+            value={product.status}
             editable={canEdit}
             label={t("status")}
             onSave={save("status")}
@@ -213,7 +213,7 @@ export function BookDetail({
             <AlertDialogTitle>{t("deleteConfirmTitle")}</AlertDialogTitle>
             <AlertDialogDescription>
               {t("deleteConfirmDescription", {
-                name: book.title ?? book.isbn ?? "",
+                name: product.title ?? product.code ?? "",
               })}
             </AlertDialogDescription>
           </AlertDialogHeader>
@@ -221,7 +221,7 @@ export function BookDetail({
             <AlertDialogCancel>{t("keep")}</AlertDialogCancel>
             <AlertDialogAction
               onClick={async () => {
-                const res = await deleteBookAction({ bookId: book.id });
+                const res = await deleteProductAction({ productId: product.id });
                 if (res?.error) setError(res.error);
                 else {
                   router.push(`/events/${eventId}`);

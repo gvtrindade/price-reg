@@ -18,13 +18,13 @@ export default async function EventsPage() {
     prisma.event.findMany({
       where: { status: "ACTIVE" },
       orderBy: { createdAt: "desc" },
-      include: { _count: { select: { books: true } } },
+      include: { _count: { select: { products: true } } },
     }),
     isManager
       ? prisma.event.findMany({
           where: { status: "INACTIVE" },
           orderBy: { createdAt: "desc" },
-          include: { _count: { select: { books: true } } },
+          include: { _count: { select: { products: true } } },
         })
       : Promise.resolve([]),
   ]);
@@ -49,7 +49,7 @@ export default async function EventsPage() {
                   {event.title}
                 </Link>
                 <span className="text-sm text-muted-foreground">
-                  {t("bookCount", { count: event._count.books })}
+                  {t("productCount", { count: event._count.products })}
                 </span>
               </li>
             ))}
@@ -75,7 +75,7 @@ export default async function EventsPage() {
                   {event.title}
                 </Link>
                 <span className="text-sm text-muted-foreground">
-                  {t("bookCount", { count: event._count.books })}
+                  {t("productCount", { count: event._count.products })}
                 </span>
               </li>
             ))}

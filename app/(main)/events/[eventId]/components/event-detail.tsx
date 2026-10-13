@@ -2,10 +2,10 @@
 
 import {
   cancelEventAction,
-  deleteBookAction,
+  deleteProductAction,
   updateEventTitleAction,
 } from "@/actions/events";
-import { AddBookDrawer } from "./add-book-drawer";
+import { AddProductDrawer } from "./add-product-drawer";
 import { ProcessingTab } from "./processing-tab";
 import { PrintingTab } from "./printing-tab";
 import { TotalsTab } from "./totals-tab";
@@ -36,16 +36,16 @@ import {
   PRINTING_QUEUED_STATUSES,
   PRINTING_IN_PROGRESS_STATUSES,
   PRINTING_DONE_STATUSES,
-} from "@/lib/book-status";
+} from "@/lib/product-status";
 import { cn } from "@/lib/utils";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
-export interface BookRow {
+export interface ProductRow {
   id: string;
   title: string | null;
   author: string | null;
-  isbn: string | null;
+  code: string | null;
   conservationState: string;
   status: string;
   price: string | null;
@@ -56,7 +56,7 @@ export interface EventData {
   title: string;
   status: "ACTIVE" | "INACTIVE";
   hasTemplate: boolean;
-  books: BookRow[];
+  products: ProductRow[];
 }
 
 export const CONSERVATION_LABELS: Record<string, string> = {
@@ -80,28 +80,28 @@ export function EventDetail({
 }) {
   const t = useTranslations("EventDetail");
   const tState = useTranslations("ConservationState");
-  const tStatus = useTranslations("BookStatus");
+  const tStatus = useTranslations("ProductStatus");
   const router = useRouter();
   const [error, setError] = useState<string | null>(null);
   const [cancelDialogOpen, setCancelDialogOpen] = useState(false);
 
   const isActive = event.status === "ACTIVE";
 
-  const filterBooks = (statuses: readonly string[]) => {
-    return event.books.filter((book) => statuses.includes(book.status));
+  const filterProducts = (statuses: readonly string[]) => {
+    return event.products.filter((product) => statuses.includes(product.status));
   };
 
-  const processingBooks = filterBooks(PROCESSING_STATUSES);
-  const queuedBooks = filterBooks(PRINTING_QUEUED_STATUSES);
-  const printingBooks = filterBooks(PRINTING_IN_PROGRESS_STATUSES);
-  const printedBooks = filterBooks(PRINTING_DONE_STATUSES);
+  const processingProducts = filterProducts(PROCESSING_STATUSES);
+  const queuedProducts = filterProducts(PRINTING_QUEUED_STATUSES);
+  const printingProducts = filterProducts(PRINTING_IN_PROGRESS_STATUSES);
+  const printedProducts = filterProducts(PRINTING_DONE_STATUSES);
 
   function refresh() {
     router.refresh();
   }
 
-  async function handleDeleteBook(bookId: string) {
-    const res = await deleteBookAction({ bookId });
+  async function handleDeleteProduct(productId: string) {
+    const res = await deleteProductAction({ productId });
     if (res?.error) setError(res.error);
     else refresh();
   }
@@ -223,22 +223,22 @@ export function EventDetail({
         <Tabs.Panel value="processing">
           <ProcessingTab
             event={event}
-            books={processingBooks}
+            products={processingProducts}
             isManager={isManager}
             isActive={isActive}
             t={t}
             tState={tState}
             tStatus={tStatus}
-            onDelete={handleDeleteBook}
+            onDelete={handleDeleteProduct}
           />
         </Tabs.Panel>
 
         <Tabs.Panel value="printing">
           <PrintingTab
             event={event}
-            queuedBooks={queuedBooks}
-            printingBooks={printingBooks}
-            printedBooks={printedBooks}
+            queuedProducts={queuedProducts}
+            printingProducts={printingProducts}
+            printedProducts={printedProducts}
             t={t}
           />
         </Tabs.Panel>
@@ -246,14 +246,14 @@ export function EventDetail({
         <Tabs.Panel value="totals">
           <TotalsTab
             event={event}
-            books={event.books}
+            products={event.products}
             t={t}
             tState={tState}
           />
         </Tabs.Panel>
       </Tabs.Root>
 
-      {isActive && <AddBookDrawer eventId={event.id} />}
+      {isActive && <AddProductDrawer eventId={event.id} />}
     </main>
   );
 }

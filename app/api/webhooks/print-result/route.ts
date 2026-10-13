@@ -39,16 +39,16 @@ export async function POST(request: NextRequest) {
   }
 
   const ids = Array.isArray(payload.ids) ? payload.ids : [];
-  const bookIds = ids.filter((id): id is string => typeof id === "string");
+  const productIds = ids.filter((id): id is string => typeof id === "string");
 
-  if (bookIds.length === 0) {
+  if (productIds.length === 0) {
     return NextResponse.json({ ok: true });
   }
 
   const newStatus = status === "ok" ? "printed" : "error";
 
-  await prisma.book.updateMany({
-    where: { id: { in: bookIds }, eventId },
+  await prisma.product.updateMany({
+    where: { id: { in: productIds }, eventId },
     data: { status: newStatus },
   });
 

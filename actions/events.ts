@@ -2,7 +2,7 @@
 
 import * as Sentry from "@sentry/nextjs";
 import { auth } from "@/lib/auth";
-import { REPROCESSABLE_STATUSES } from "@/lib/book-status";
+import { REPROCESSABLE_STATUSES } from "@/lib/product-status";
 import { prisma } from "@/lib/prisma";
 import { webhookToken, printResultWebhookToken } from "@/lib/webhook-token";
 import { headers } from "next/headers";
@@ -64,14 +64,14 @@ export async function cancelEventAction(data: { eventId: string }) {
   });
 }
 
-type BookFieldError =
+type ProductFieldError =
   | "invalidTitle"
   | "invalidAuthor"
   | "invalidPrice"
   | "invalidConservationState"
   | "invalidStatus";
 
-function parseBookData(data: {
+function parseProductData(data: {
   title?: string;
   author?: string;
   price?: string;
@@ -89,51 +89,51 @@ function parseBookData(data: {
 
   if (data.title !== undefined) {
     const title = data.title.trim();
-    if (!title) return { error: "invalidTitle" as BookFieldError };
+    if (!title) return { error: "invalidTitle" as ProductFieldError };
     out.title = title;
   }
   if (data.author !== undefined) {
     const author = data.author.trim();
-    if (!author) return { error: "invalidAuthor" as BookFieldError };
+    if (!author) return { error: "invalidAuthor" as ProductFieldError };
     out.author = author;
   }
   if (data.price !== undefined) {
     const price = Number(data.price.replace(",", "."));
     if (!Number.isFinite(price) || price < 0)
-      return { error: "invalidPrice" as BookFieldError };
+      return { error: "invalidPrice" as ProductFieldError };
     out.price = Math.round(price * 100) / 100;
     out.priced = out.price > 0;
   }
   if (data.conservationState !== undefined) {
     const cs = data.conservationState.trim();
-    if (!cs) return { error: "invalidConservationState" as BookFieldError };
+    if (!cs) return { error: "invalidConservationState" as ProductFieldError };
     out.conservationState = cs;
   }
   if (data.status !== undefined) {
     const status = data.status.trim();
-    if (!status) return { error: "invalidStatus" as BookFieldError };
+    if (!status) return { error: "invalidStatus" as ProductFieldError };
     out.status = status;
   }
   return { error: null, data: out };
 }
 
-export async function addBookAction(data: {
+export async function addProductAction(data: {
   eventId: string;
   title?: string;
   author?: string;
-  isbn?: string;
+  code?: string;
   conservationState: string;
 }) {
-  return Sentry.withServerActionInstrumentation("addBookAction", async () => {
+  return Sentry.withServerActionInstrumentation("addProductAction", async () => {
     const t = await getTranslations("Errors");
     if (!(await requireSession())) return { error: t("sessionExpired") };
 
     const title = data.title?.trim() || null;
     const author = data.author?.trim() || null;
-    const isbn = data.isbn?.trim() || null;
+    const code = data.code?.trim() || null;
     const conservationState = data.conservationState.trim();
 
-    if (!isbn && !title) return { error: t("bookNameOrIsbnRequired") };
+    if (!code && !title) return { error: t("productNameOrCodeRequired") };
     if (title && !author) return { error: t("invalidAuthor") };
     if (!conservationState) return { error: t("invalidConservationState") };
 
@@ -143,16 +143,16 @@ export async function addBookAction(data: {
     });
     if (!event || event.status !== "ACTIVE") return { error: t("eventNotFound") };
 
-    const serviceUrl = process.env.NEXT_BOOK_PRICE_FINDER_URL;
+    const serviceUrl = process.env.NEXT_PRODUCT_PRICE_FINDER_URL;
     const webhookBase = process.env.NEXT_APPLICATION_URL;
     if (!serviceUrl || !webhookBase)
       return { error: t("priceFinderNotConfigured") };
 
-    const bookId = crypto.randomUUID();
-    const webhookUrl = new URL("/api/webhooks/book-valuation", webhookBase);
-    webhookUrl.searchParams.set("bookId", bookId);
+    const productId = crypto.randomUUID();
+    const webhookUrl = new URL("/api/webhooks/product-valuation", webhookBase);
+    webhookUrl.searchParams.set("productId", productId);
     webhookUrl.searchParams.set("eventId", data.eventId);
-    webhookUrl.searchParams.set("token", webhookToken(bookId, data.eventId));
+    webhookUrl.searchParams.set("token", webhookToken(productId, data.eventId));
 
     let lookup: Response;
     try {
@@ -161,7 +161,7 @@ export async function addBookAction(data: {
         headers: { "Content-Type": "application/json" },
         cache: "no-store",
         body: JSON.stringify({
-          ...(isbn ? { isbn } : {}),
+          ...(code ? { code } : {}),
           ...(title ? { title } : {}),
           ...(author ? { author } : {}),
           conservation_state: conservationState,
@@ -179,20 +179,20 @@ export async function addBookAction(data: {
 
     // The service delivers its webhook while this request is still in flight,
     // so the row may already exist (created by the webhook); never clobber it.
-    await prisma.book.upsert({
-      where: { id: bookId },
+    await prisma.product.upsert({
+      where: { id: productId },
       create: {
-        id: bookId,
+        id: productId,
         eventId: data.eventId,
         title,
         author,
-        isbn,
+        code,
         conservationState,
         status: "registered",
       },
       update: {},
     });
-    return { error: null, id: bookId };
+    return { error: null, id: productId };
   });
 }
 
@@ -218,57 +218,57 @@ async function readLookupError(response: Response): Promise<string | null> {
   return typeof error === "string" ? error : null;
 }
 
-export async function updateBookAction(data: {
-  bookId: string;
+export async function updateProductAction(data: {
+  productId: string;
   title?: string;
   author?: string;
   price?: string;
   conservationState?: string;
   status?: string;
 }) {
-  return Sentry.withServerActionInstrumentation("updateBookAction", async () => {
+  return Sentry.withServerActionInstrumentation("updateProductAction", async () => {
     const t = await getTranslations("Errors");
     if (!(await requireManager())) return { error: t("notManager") };
 
-    const parsed = parseBookData(data);
+    const parsed = parseProductData(data);
     if (parsed.error) return { error: t(parsed.error) };
 
-    const book = await prisma.book.findUnique({
-      where: { id: data.bookId },
+    const product = await prisma.product.findUnique({
+      where: { id: data.productId },
       select: { id: true, event: { select: { status: true } } },
     });
-    if (!book || book.event.status !== "ACTIVE") return { error: t("bookNotFound") };
+    if (!product || product.event.status !== "ACTIVE") return { error: t("productNotFound") };
 
-    await prisma.book.update({ where: { id: data.bookId }, data: parsed.data });
+    await prisma.product.update({ where: { id: data.productId }, data: parsed.data });
     return { error: null };
   });
 }
 
-export async function reprocessBookAction(data: { bookId: string }) {
-  return Sentry.withServerActionInstrumentation("reprocessBookAction", async () => {
+export async function reprocessProductAction(data: { productId: string }) {
+  return Sentry.withServerActionInstrumentation("reprocessProductAction", async () => {
     const t = await getTranslations("Errors");
     if (!(await requireManager())) return { error: t("notManager") };
 
-    const book = await prisma.book.findUnique({
-      where: { id: data.bookId },
+    const product = await prisma.product.findUnique({
+      where: { id: data.productId },
       include: { event: { select: { id: true, status: true } } },
     });
-    if (!book || book.event.status !== "ACTIVE") return { error: t("bookNotFound") };
-    if (!REPROCESSABLE_STATUSES.includes(book.status))
-      return { error: t("bookNotRegistered") };
+    if (!product || product.event.status !== "ACTIVE") return { error: t("productNotFound") };
+    if (!REPROCESSABLE_STATUSES.includes(product.status))
+      return { error: t("productNotRegistered") };
 
     const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000);
-    if (book.createdAt > fiveMinutesAgo) return { error: t("bookTooRecent") };
+    if (product.createdAt > fiveMinutesAgo) return { error: t("productTooRecent") };
 
-    const serviceUrl = process.env.NEXT_BOOK_PRICE_FINDER_URL;
+    const serviceUrl = process.env.NEXT_PRODUCT_PRICE_FINDER_URL;
     const webhookBase = process.env.NEXT_APPLICATION_URL;
     if (!serviceUrl || !webhookBase)
       return { error: t("priceFinderNotConfigured") };
 
-    const webhookUrl = new URL("/api/webhooks/book-valuation", webhookBase);
-    webhookUrl.searchParams.set("bookId", book.id);
-    webhookUrl.searchParams.set("eventId", book.eventId);
-    webhookUrl.searchParams.set("token", webhookToken(book.id, book.eventId));
+    const webhookUrl = new URL("/api/webhooks/product-valuation", webhookBase);
+    webhookUrl.searchParams.set("productId", product.id);
+    webhookUrl.searchParams.set("eventId", product.eventId);
+    webhookUrl.searchParams.set("token", webhookToken(product.id, product.eventId));
 
     let lookup: Response;
     try {
@@ -277,10 +277,10 @@ export async function reprocessBookAction(data: { bookId: string }) {
         headers: { "Content-Type": "application/json" },
         cache: "no-store",
         body: JSON.stringify({
-          ...(book.isbn ? { isbn: book.isbn } : {}),
-          ...(book.title ? { title: book.title } : {}),
-          ...(book.author ? { author: book.author } : {}),
-          conservation_state: book.conservationState,
+          ...(product.code ? { code: product.code } : {}),
+          ...(product.title ? { title: product.title } : {}),
+          ...(product.author ? { author: product.author } : {}),
+          conservation_state: product.conservationState,
           webhook_url: webhookUrl.toString(),
         }),
       });
@@ -297,13 +297,13 @@ export async function reprocessBookAction(data: { bookId: string }) {
   });
 }
 
-export async function deleteBookAction(data: { bookId: string }) {
-  return Sentry.withServerActionInstrumentation("deleteBookAction", async () => {
+export async function deleteProductAction(data: { productId: string }) {
+  return Sentry.withServerActionInstrumentation("deleteProductAction", async () => {
     const t = await getTranslations("Errors");
     if (!(await requireManager())) return { error: t("notManager") };
 
-    const { count } = await prisma.book.deleteMany({ where: { id: data.bookId } });
-    if (count === 0) return { error: t("bookNotFound") };
+    const { count } = await prisma.product.deleteMany({ where: { id: data.productId } });
+    if (count === 0) return { error: t("productNotFound") };
     return { error: null };
   });
 }
@@ -352,8 +352,8 @@ export async function deletePrintTemplateAction(data: { eventId: string }) {
   });
 }
 
-export async function printBooksAction(data: { eventId: string; bookIds: string[] }) {
-  return Sentry.withServerActionInstrumentation("printBooksAction", async () => {
+export async function printProductsAction(data: { eventId: string; productIds: string[] }) {
+  return Sentry.withServerActionInstrumentation("printProductsAction", async () => {
     const t = await getTranslations("Errors");
     if (!(await requireManager())) return { error: t("notManager") };
 
@@ -361,8 +361,8 @@ export async function printBooksAction(data: { eventId: string; bookIds: string[
       where: { id: data.eventId },
       include: {
         printTemplate: { select: { blob: true } },
-        books: {
-          where: { id: { in: data.bookIds } },
+        products: {
+          where: { id: { in: data.productIds } },
           select: { id: true, title: true, author: true, price: true },
         },
       },
@@ -381,11 +381,11 @@ export async function printBooksAction(data: { eventId: string; bookIds: string[
     callbackUrl.searchParams.set("eventId", data.eventId);
     callbackUrl.searchParams.set("token", printResultWebhookToken(jobId, data.eventId));
 
-    const books = event.books.map((book) => ({
-      id: book.id,
-      title: book.title ?? "",
-      author: book.author ?? "",
-      price: book.price !== null ? Number(book.price) : null,
+    const products = event.products.map((product) => ({
+      id: product.id,
+      title: product.title ?? "",
+      author: product.author ?? "",
+      price: product.price !== null ? Number(product.price) : null,
     }));
 
     try {
@@ -395,7 +395,7 @@ export async function printBooksAction(data: { eventId: string; bookIds: string[
         cache: "no-store",
         body: JSON.stringify({
           job_id: jobId,
-          books,
+          products,
           template: Buffer.from(event.printTemplate.blob).toString("base64"),
           callback_url: callbackUrl.toString(),
         }),
@@ -405,8 +405,8 @@ export async function printBooksAction(data: { eventId: string; bookIds: string[
       return { error: "printServiceUnreachable" };
     }
 
-    await prisma.book.updateMany({
-      where: { id: { in: data.bookIds } },
+    await prisma.product.updateMany({
+      where: { id: { in: data.productIds } },
       data: { status: "printing" },
     });
 
