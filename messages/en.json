@@ -5,18 +5,6 @@
     "good": "Good (G)",
     "fair": "Fair"
   },
-  "BookCategory": {
-    "religion": "Religion",
-    "literature": "Literature",
-    "sociology": "Sociology",
-    "selfHelp": "Self-help",
-    "law": "Law",
-    "health": "Health",
-    "culture": "Culture",
-    "studies": "Studies",
-    "foreign": "Foreign",
-    "languages": "Languages"
-  },
   "BookStatus": {
     "registered": "Registered",
     "error": "Error",
@@ -29,8 +17,8 @@
     "title": "Hello world!"
   },
   "Metadata": {
-    "appName": "App",
-    "appDescription": "App description"
+    "appName": "Price-Reg",
+    "appDescription": "Price registering app"
   },
   "Auth": {
     "backToLogin": "Back to sign in"
@@ -122,6 +110,8 @@
     "events": "Events",
     "settings": "Settings",
     "logout": "Log out",
+    "darkMode": "Dark mode",
+    "lightMode": "Light mode",
     "collapse": "Collapse sidebar",
     "expand": "Expand sidebar"
   },
@@ -192,7 +182,6 @@
     "invalidAuthor": "Book author is required",
     "invalidPrice": "Please enter a valid price",
     "invalidConservationState": "Conservation state is required",
-    "invalidCategory": "Invalid category",
     "invalidStatus": "Status is required",
     "sessionExpired": "Your session has expired. Please sign in again.",
     "bookNameOrIsbnRequired": "Enter an ISBN, or both the name and the author, for the book",
@@ -329,8 +318,6 @@
     "unknownAuthor": "Unknown",
     "isbn": "ISBN",
     "price": "Price",
-    "category": "Category",
-    "noCategory": "None",
     "conservationState": "Conservation state",
     "status": "Status",
     "actions": "Book actions",

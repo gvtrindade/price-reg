@@ -5,18 +5,6 @@
     "good": "Bom (G)",
     "fair": "Regular"
   },
-  "BookCategory": {
-    "religion": "Religião",
-    "literature": "Literatura",
-    "sociology": "Sociologia",
-    "selfHelp": "Autoajuda",
-    "law": "Direito",
-    "health": "Saúde",
-    "culture": "Cultura",
-    "studies": "Estudos",
-    "foreign": "Estrangeiro",
-    "languages": "Linguagens"
-  },
   "BookStatus": {
     "registered": "Registrado",
     "error": "Erro",
@@ -29,8 +17,8 @@
     "title": "Hello world!"
   },
   "Metadata": {
-    "appName": "Aplicativo",
-    "appDescription": "Descrição do aplicativo"
+    "appName": "Price-Reg",
+    "appDescription": "App para registro de preços"
   },
   "Auth": {
     "backToLogin": "Voltar para entrar"
@@ -162,7 +150,6 @@
     "invalidAuthor": "O autor do livro é obrigatório",
     "invalidPrice": "Digite um preço válido",
     "invalidConservationState": "O estado de conservação é obrigatório",
-    "invalidCategory": "Categoria inválida",
     "invalidStatus": "O status é obrigatório",
     "sessionExpired": "Sua sessão expirou. Entre novamente.",
     "bookNameOrIsbnRequired": "Informe um ISBN, ou o nome e o autor, para o livro",
@@ -210,6 +197,8 @@
     "events": "Eventos",
     "settings": "Configurações",
     "logout": "Sair",
+    "darkMode": "Modo escuro",
+    "lightMode": "Modo claro",
     "collapse": "Recolher menu lateral",
     "expand": "Expandir menu lateral"
   },
@@ -329,8 +318,6 @@
     "unknownAuthor": "Desconhecido",
     "isbn": "ISBN",
     "price": "Preço",
-    "category": "Categoria",
-    "noCategory": "Nenhuma",
     "conservationState": "Estado de conservação",
     "status": "Status",
     "actions": "Ações do livro",

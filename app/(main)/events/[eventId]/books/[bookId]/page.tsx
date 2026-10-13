@@ -34,7 +34,6 @@ export default async function BookDetailPage({
         title: book.title,
         author: book.author,
         isbn: book.isbn,
-        category: book.category,
         conservationState: book.conservationState,
         status: book.status,
         price: book.price === null ? null : String(book.price),

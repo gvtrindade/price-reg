@@ -1,6 +1,7 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
+import { ThemeToggle } from "@/components/theme-toggle";
 import { authClient } from "@/lib/auth-client";
 import {
   CalendarDays,
@@ -109,6 +110,7 @@ export default function Sidebar({ children }: { children: React.ReactNode }) {
                 <Settings className="size-4 shrink-0" />
                 <span>{t("settings")}</span>
               </Button>
+              <ThemeToggle />
               <Button
                 variant="ghost"
                 className="justify-start gap-3"

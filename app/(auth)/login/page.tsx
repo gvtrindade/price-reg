@@ -61,7 +61,7 @@ function LoginForm() {
         setError(authError.message ?? t("invalidCredentials"))
       }
     } else {
-      router.replace("/protected")
+      router.replace("/events")
     }
   }
 

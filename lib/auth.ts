@@ -10,7 +10,7 @@ const prisma = new PrismaClient({
 
 export const auth = betterAuth({
   trustedOrigins: [
-    "https://reproduce-undrafted-battered.ngrok-free.dev",
+    "https://*.ngrok-free.app",
     "http://localhost:3000",
     "https://localhost:3000",
     "https://192.168.1.10:3000"

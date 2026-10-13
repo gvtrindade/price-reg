@@ -69,6 +69,8 @@ export async function generateMetadata(): Promise<Metadata> {
   };
 }
 
+const themeScript = `(function(){try{var t=localStorage.getItem("theme");var d=t==="dark"||(!t&&window.matchMedia("(prefers-color-scheme: dark)").matches);document.documentElement.classList.toggle("dark",d);}catch(e){}})();`;
+
 export default async function RootLayout({
   children,
 }: Readonly<{
@@ -79,6 +81,7 @@ export default async function RootLayout({
   return (
     <html
       lang={locale}
+      suppressHydrationWarning
       className={cn(
         "h-full",
         inter.variable,
@@ -89,6 +92,9 @@ export default async function RootLayout({
         geist.variable,
       )}
     >
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: themeScript }} />
+      </head>
       <body className="min-h-full flex flex-col scanlines">
         <SerwistProvider swUrl="/serwist/sw.js">
           <NextIntlClientProvider>{children}</NextIntlClientProvider>

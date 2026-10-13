@@ -3,7 +3,6 @@
 import * as Sentry from "@sentry/nextjs";
 import { auth } from "@/lib/auth";
 import { REPROCESSABLE_STATUSES } from "@/lib/book-status";
-import { BOOK_CATEGORIES, type BookCategory } from "@/lib/book-category";
 import { prisma } from "@/lib/prisma";
 import { webhookToken, printResultWebhookToken } from "@/lib/webhook-token";
 import { headers } from "next/headers";
@@ -70,14 +69,12 @@ type BookFieldError =
   | "invalidAuthor"
   | "invalidPrice"
   | "invalidConservationState"
-  | "invalidCategory"
   | "invalidStatus";
 
 function parseBookData(data: {
   title?: string;
   author?: string;
   price?: string;
-  category?: string;
   conservationState?: string;
   status?: string;
 }) {
@@ -86,7 +83,6 @@ function parseBookData(data: {
     author?: string;
     price?: number;
     priced?: boolean;
-    category?: string | null;
     conservationState?: string;
     status?: string;
   } = {};
@@ -112,16 +108,6 @@ function parseBookData(data: {
     const cs = data.conservationState.trim();
     if (!cs) return { error: "invalidConservationState" as BookFieldError };
     out.conservationState = cs;
-  }
-  if (data.category !== undefined) {
-    const cat = data.category.trim();
-    if (!cat) {
-      out.category = null;
-    } else if (!(Object.values(BOOK_CATEGORIES) as string[]).includes(cat)) {
-      return { error: "invalidCategory" as BookFieldError };
-    } else {
-      out.category = cat as BookCategory;
-    }
   }
   if (data.status !== undefined) {
     const status = data.status.trim();
@@ -237,7 +223,6 @@ export async function updateBookAction(data: {
   title?: string;
   author?: string;
   price?: string;
-  category?: string;
   conservationState?: string;
   status?: string;
 }) {
