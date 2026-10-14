@@ -111,8 +111,13 @@ export async function POST(request: NextRequest) {
       data.price = estimatedValue;
       data.priced = true;
     }
-    // A valuation that succeeded after a previous error/not-found must clear it.
-    if (target.status === "error" || target.status === "not_found") {
+    // A valuation that succeeded after a previous error/not-found, or after the
+    // product was only just added, must move it to registered.
+    if (
+      target.status === "added" ||
+      target.status === "error" ||
+      target.status === "not_found"
+    ) {
       data.status = "registered";
     }
   }

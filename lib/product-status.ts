@@ -1,4 +1,5 @@
 export enum ProductStatus {
+  ADDED = "added",
   REGISTERED = "registered",
   ERROR = "error",
   NOT_FOUND = "not_found",
@@ -8,6 +9,7 @@ export enum ProductStatus {
 }
 
 export const PRODUCT_STATUS_LABEL_KEYS: Record<ProductStatus, string> = {
+  [ProductStatus.ADDED]: "added",
   [ProductStatus.REGISTERED]: "registered",
   [ProductStatus.ERROR]: "error",
   [ProductStatus.NOT_FOUND]: "notFound",
@@ -17,12 +19,14 @@ export const PRODUCT_STATUS_LABEL_KEYS: Record<ProductStatus, string> = {
 };
 
 export const REPROCESSABLE_STATUSES: readonly string[] = [
+  ProductStatus.ADDED,
   ProductStatus.REGISTERED,
   ProductStatus.ERROR,
   ProductStatus.NOT_FOUND,
 ];
 
 export const PROCESSING_STATUSES: readonly string[] = [
+  ProductStatus.ADDED,
   ProductStatus.REGISTERED,
   ProductStatus.ERROR,
 ];
@@ -41,6 +45,7 @@ export const PRINTING_DONE_STATUSES: readonly string[] = [
 ];
 
 export const EDITABLE_PRODUCT_STATUSES: readonly string[] = [
+  ProductStatus.ADDED,
   ProductStatus.REGISTERED,
   ProductStatus.ERROR,
   ProductStatus.NOT_FOUND,

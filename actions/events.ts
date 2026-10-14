@@ -188,7 +188,7 @@ export async function addProductAction(data: {
         author,
         code,
         conservationState,
-        status: "registered",
+        status: "added",
       },
       update: {},
     });

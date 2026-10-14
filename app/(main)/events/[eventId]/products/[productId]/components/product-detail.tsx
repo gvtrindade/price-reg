@@ -201,7 +201,7 @@ export function ProductDetail({
             onError={setError}
             options={STATUS_OPTIONS.map((o) => ({
               value: o.value,
-              label: tStatus(o.labelKey as "registered" | "error" | "notFound"),
+              label: tStatus(o.labelKey as "added" | "registered" | "error" | "notFound"),
             }))}
           />
         </Field>

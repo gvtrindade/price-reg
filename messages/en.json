@@ -6,6 +6,7 @@
     "fair": "Fair"
   },
   "ProductStatus": {
+    "added": "Added",
     "registered": "Registered",
     "error": "Error",
     "notFound": "Not found",

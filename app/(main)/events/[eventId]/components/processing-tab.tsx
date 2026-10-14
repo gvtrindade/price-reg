@@ -37,7 +37,7 @@ function ProductListItem({
   isActive: boolean;
   t: (key: string, values?: Record<string, string | number>) => string;
   tState: (key: "asNew" | "nearFine" | "good" | "fair") => string;
-  tStatus: (key: "registered" | "error" | "notFound" | "queued" | "printing" | "printed") => string;
+  tStatus: (key: "added" | "registered" | "error" | "notFound" | "queued" | "printing" | "printed") => string;
   onDelete: (productId: string) => void;
 }) {
   const statusKey = PRODUCT_STATUS_LABEL_KEYS[product.status as ProductStatus];
@@ -63,7 +63,7 @@ function ProductListItem({
           )}{" "}
           ·{" "}
           {statusKey
-            ? tStatus(statusKey as "registered" | "error" | "notFound" | "queued" | "printing" | "printed")
+            ? tStatus(statusKey as "added" | "registered" | "error" | "notFound" | "queued" | "printing" | "printed")
             : product.status}
         </p>
       </div>
@@ -127,7 +127,7 @@ function ProductList({
   isActive: boolean;
   t: (key: string, values?: Record<string, string | number>) => string;
   tState: (key: "asNew" | "nearFine" | "good" | "fair") => string;
-  tStatus: (key: "registered" | "error" | "notFound" | "queued" | "printing" | "printed") => string;
+  tStatus: (key: "added" | "registered" | "error" | "notFound" | "queued" | "printing" | "printed") => string;
   onDelete: (productId: string) => void;
 }) {
   if (products.length === 0) return null;
@@ -166,7 +166,7 @@ export function ProcessingTab({
   isActive: boolean;
   t: (key: string, values?: Record<string, string | number>) => string;
   tState: (key: "asNew" | "nearFine" | "good" | "fair") => string;
-  tStatus: (key: "registered" | "error" | "notFound" | "queued" | "printing" | "printed") => string;
+  tStatus: (key: "added" | "registered" | "error" | "notFound" | "queued" | "printing" | "printed") => string;
   onDelete: (productId: string) => void;
 }) {
   return (

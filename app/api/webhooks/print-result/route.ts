@@ -42,15 +42,32 @@ export async function POST(request: NextRequest) {
   const productIds = ids.filter((id): id is string => typeof id === "string");
 
   if (productIds.length === 0) {
+    // The printer service should echo back the product ids it was sent. If we
+    // get here the caller cannot tell which products finished printing.
+    console.warn(
+      `Print job ${jobId} (event ${eventId}): no usable product ids in payload`,
+      { status, ids },
+    );
     return NextResponse.json({ ok: true });
   }
 
   const newStatus = status === "ok" ? "printed" : "error";
 
-  await prisma.product.updateMany({
+  const { count } = await prisma.product.updateMany({
     where: { id: { in: productIds }, eventId },
     data: { status: newStatus },
   });
+
+  if (count === 0) {
+    console.warn(
+      `Print job ${jobId} (event ${eventId}): no products matched the reported ids`,
+      { status, productIds },
+    );
+  } else {
+    console.info(
+      `Print job ${jobId} (event ${eventId}): marked ${count} product(s) as ${newStatus}`,
+    );
+  }
 
   if (status === "error" && payload.errors) {
     console.error(`Print job ${jobId} errors:`, payload.errors);
