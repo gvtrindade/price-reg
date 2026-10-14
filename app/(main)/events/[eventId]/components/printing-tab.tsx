@@ -25,31 +25,34 @@ import { useCallback, useState } from "react";
 
 function QueuedProductListItem({
   product,
-  event,
   selected,
   onToggle,
-  t,
 }: {
   product: ProductRow;
-  event: EventData;
   selected: boolean;
   onToggle: (productId: string) => void;
-  t: (key: string, values?: Record<string, string | number>) => string;
 }) {
   return (
-    <li className="relative flex items-center gap-4 p-4 transition-colors hover:bg-accent/50">
-      <div className="relative z-10">
-        <input
-          type="checkbox"
-          checked={selected}
-          onChange={() => onToggle(product.id)}
-          className="h-4 w-4 rounded border-gray-300 accent-primary"
-        />
-      </div>
-      <Link
-        href={`/events/${event.id}/products/${product.id}`}
-        aria-label={t("openProduct")}
-        className="absolute inset-0 rounded-lg pl-12 outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
+    <li
+      role="checkbox"
+      aria-checked={selected}
+      aria-label={product.title ?? product.code ?? product.id}
+      tabIndex={0}
+      onClick={() => onToggle(product.id)}
+      onKeyDown={(e) => {
+        if (e.key === " " || e.key === "Enter") {
+          e.preventDefault();
+          onToggle(product.id);
+        }
+      }}
+      className="flex cursor-pointer items-center gap-4 p-4 transition-colors hover:bg-accent/50 outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
+    >
+      <input
+        type="checkbox"
+        checked={selected}
+        readOnly
+        tabIndex={-1}
+        className="pointer-events-none h-4 w-4 rounded border-gray-300 accent-primary"
       />
       <p className="min-w-0 flex-1 truncate font-medium">
         {product.title ?? product.code ?? "—"}
@@ -265,10 +268,8 @@ export function PrintingTab({
               <QueuedProductListItem
                 key={product.id}
                 product={product}
-                event={event}
                 selected={selectedProductIds.has(product.id)}
                 onToggle={toggleProductSelection}
-                t={t}
               />
             ))}
           </ul>

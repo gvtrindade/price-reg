@@ -39,7 +39,7 @@ import {
 } from "@/lib/product-status";
 import { cn } from "@/lib/utils";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 export interface ProductRow {
   id: string;
@@ -86,6 +86,20 @@ export function EventDetail({
   const [cancelDialogOpen, setCancelDialogOpen] = useState(false);
 
   const isActive = event.status === "ACTIVE";
+
+  // Poll for status changes made by print-result webhooks.
+  useEffect(() => {
+    if (!isActive) return;
+    const interval = setInterval(() => router.refresh(), 4000);
+    const onVisible = () => {
+      if (document.visibilityState === "visible") router.refresh();
+    };
+    document.addEventListener("visibilitychange", onVisible);
+    return () => {
+      clearInterval(interval);
+      document.removeEventListener("visibilitychange", onVisible);
+    };
+  }, [isActive, router]);
 
   const filterProducts = (statuses: readonly string[]) => {
     return event.products.filter((product) => statuses.includes(product.status));
