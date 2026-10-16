@@ -363,7 +363,7 @@ export async function printProductsAction(data: { eventId: string; productIds: s
         printTemplate: { select: { blob: true } },
         products: {
           where: { id: { in: data.productIds } },
-          select: { id: true, title: true, author: true, price: true },
+          select: { id: true, title: true, author: true, price: true, externalId: true },
         },
       },
     });
@@ -386,6 +386,7 @@ export async function printProductsAction(data: { eventId: string; productIds: s
       title: product.title ?? "",
       author: product.author ?? "",
       price: product.price !== null ? Number(product.price) : null,
+      external_id: product.externalId,
     }));
 
     try {

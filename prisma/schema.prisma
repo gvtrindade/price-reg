@@ -125,6 +125,7 @@ model Product {
   title             String?
   author            String?
   code              String?
+  externalId        String?  @map("external_id")
   conservationState String   @map("conservation_state")
   status            String
   price             Decimal? @db.Decimal(10, 2)

@@ -8,6 +8,7 @@ interface ValuationPayload {
   title?: unknown;
   author?: unknown;
   code?: unknown;
+  external_id?: unknown;
   conservation_state?: unknown;
   estimated_value?: unknown;
   status?: unknown;
@@ -52,6 +53,7 @@ export async function POST(request: NextRequest) {
   const title = cleanText(payload.title);
   const author = cleanText(payload.author);
   const code = cleanText(payload.code);
+  const externalId = cleanText(payload.external_id);
   const estimatedValue = cleanPrice(payload.estimated_value);
   const status = cleanText(payload.status);
   const errorMessage = cleanText(payload.error);
@@ -74,6 +76,7 @@ export async function POST(request: NextRequest) {
           title,
           author,
           code,
+          externalId,
           conservationState: cleanText(payload.conservation_state) ?? "unknown",
           status: isError ? "error" : isNotFound ? "not_found" : "registered",
           price: estimatedValue,
@@ -124,6 +127,7 @@ export async function POST(request: NextRequest) {
   if (title && title !== target.title) data.title = title;
   if (author && author !== target.author) data.author = author;
   if (code && code !== target.code) data.code = code;
+  if (externalId && externalId !== target.externalId) data.externalId = externalId;
 
   if (Object.keys(data).length > 0) {
     await prisma.product.update({ where: { id: productId }, data });
