@@ -2,7 +2,7 @@
 
 import * as Sentry from "@sentry/nextjs";
 import { auth } from "@/lib/auth";
-import { REPROCESSABLE_STATUSES } from "@/lib/product-status";
+import { ProductStatus, REPROCESSABLE_STATUSES } from "@/lib/product-status";
 import { prisma } from "@/lib/prisma";
 import { webhookToken, printResultWebhookToken } from "@/lib/webhook-token";
 import { headers } from "next/headers";
@@ -235,9 +235,40 @@ export async function updateProductAction(data: {
 
     const product = await prisma.product.findUnique({
       where: { id: data.productId },
-      select: { id: true, event: { select: { status: true } } },
+      select: {
+        id: true,
+        title: true,
+        author: true,
+        price: true,
+        status: true,
+        event: { select: { status: true } },
+      },
     });
     if (!product || product.event.status !== "ACTIVE") return { error: t("productNotFound") };
+
+    // A product that the valuation service could not register becomes printable
+    // once the manager fills in the details it was missing. Only promote when
+    // the edit does not explicitly choose a status.
+    if (parsed.data.status === undefined) {
+      const promotableStatuses: readonly string[] = [
+        ProductStatus.ADDED,
+        ProductStatus.ERROR,
+        ProductStatus.NOT_FOUND,
+      ];
+      if (promotableStatuses.includes(product.status)) {
+        const title = parsed.data.title ?? product.title;
+        const author = parsed.data.author ?? product.author;
+        const price =
+          parsed.data.price !== undefined
+            ? parsed.data.price
+            : product.price !== null
+              ? Number(product.price)
+              : null;
+        if (title && author && price !== null && price > 0) {
+          parsed.data.status = ProductStatus.REGISTERED;
+        }
+      }
+    }
 
     await prisma.product.update({ where: { id: data.productId }, data: parsed.data });
     return { error: null };

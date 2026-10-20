@@ -29,6 +29,7 @@ export const PROCESSING_STATUSES: readonly string[] = [
   ProductStatus.ADDED,
   ProductStatus.REGISTERED,
   ProductStatus.ERROR,
+  ProductStatus.NOT_FOUND,
 ];
 
 export const PRINTING_QUEUED_STATUSES: readonly string[] = [
