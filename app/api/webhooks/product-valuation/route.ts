@@ -78,7 +78,13 @@ export async function POST(request: NextRequest) {
           code,
           externalId,
           conservationState: cleanText(payload.conservation_state) ?? "unknown",
-          status: isError ? "error" : isNotFound ? "not_found" : "registered",
+          status: isError
+            ? "error"
+            : isNotFound
+              ? "not_found"
+              : externalId
+                ? "registered"
+                : "processed",
           price: estimatedValue,
           priced: estimatedValue !== null,
         },
@@ -114,14 +120,20 @@ export async function POST(request: NextRequest) {
       data.price = estimatedValue;
       data.priced = true;
     }
-    // A valuation that succeeded after a previous error/not-found, or after the
-    // product was only just added, must move it to registered.
-    if (
-      target.status === "added" ||
-      target.status === "error" ||
-      target.status === "not_found"
-    ) {
-      data.status = "registered";
+    // A valuation that succeeded after a previous error/not-found/processing
+    // failure, or after the product was only just added, must move it to the
+    // next status: registered when it has an external id (printable), or
+    // processed while the id is still missing.
+    const targetExternalId = externalId ?? target.externalId;
+    const movableStatuses: readonly string[] = [
+      "added",
+      "registered",
+      "processed",
+      "error",
+      "not_found",
+    ];
+    if (movableStatuses.includes(target.status)) {
+      data.status = targetExternalId ? "registered" : "processed";
     }
   }
   if (title && title !== target.title) data.title = title;

@@ -8,6 +8,7 @@
   "ProductStatus": {
     "added": "Adicionado",
     "registered": "Registrado",
+    "processed": "Processado",
     "error": "Erro",
     "notFound": "Não encontrado",
     "queued": "Na fila",
@@ -163,6 +164,7 @@
     "printServiceNotConfigured": "O serviço de impressão não está configurado.",
     "printServiceUnreachable": "O serviço de impressão está indisponível.",
     "printServiceRejected": "O serviço de impressão rejeitou a solicitação.",
+    "productMissingExternalId": "Alguns produtos selecionados ainda não têm um ID externo. Registre os IDs externos antes de imprimir.",
     "invalidSvg": "O arquivo deve ser um SVG válido."
   },
   "Emails": {
@@ -310,6 +312,12 @@
     "changeTemplate": "Alterar modelo",
     "newTemplate": "Novo modelo",
     "manageMembers": "Gerenciar membros",
+    "registerExternalIds": "Registrar IDs externos",
+    "registeringExternalIds": "Registrando IDs externos...",
+    "externalIdsRegistered": "{count, plural, =0 {Nenhum ID externo registrado} one {# ID externo registrado} other {# IDs externos registrados}}",
+    "noExternalIdsRegistered": "Nenhum ID externo foi registrado",
+    "externalIdsRemaining": "{count, plural, =0 {Todos os produtos já têm um ID externo.} one {# produto ainda precisa de um ID externo.} other {# produtos ainda precisam de um ID externo.}}",
+    "externalIdsError": "Não foi possível registrar os IDs externos.",
     "membersTitle": "Membros do evento",
     "membersDescription": "Os membros podem editar os dados dos produtos e imprimir produtos deste evento.",
     "noUsers": "Nenhum usuário disponível.",

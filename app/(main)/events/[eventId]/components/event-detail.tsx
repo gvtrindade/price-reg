@@ -11,6 +11,7 @@ import { ProcessingTab } from "./processing-tab";
 import { PrintingTab } from "./printing-tab";
 import { TotalsTab } from "./totals-tab";
 import { InlineEdit } from "@/components/inline-edit";
+import { toast } from "@/components/toast";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -31,7 +32,7 @@ import {
 import { Tabs } from "@base-ui/react/tabs";
 import { useTranslations } from "next-intl";
 import Link from "next/link";
-import { ArrowLeft, MoreHorizontal } from "lucide-react";
+import { ArrowLeft, MoreHorizontal, RefreshCw } from "lucide-react";
 import {
   PROCESSING_STATUSES,
   PRINTING_QUEUED_STATUSES,
@@ -88,10 +89,12 @@ export function EventDetail({
   const t = useTranslations("EventDetail");
   const tState = useTranslations("ConservationState");
   const tStatus = useTranslations("ProductStatus");
+  const tErrors = useTranslations("Errors");
   const router = useRouter();
   const [error, setError] = useState<string | null>(null);
   const [cancelDialogOpen, setCancelDialogOpen] = useState(false);
   const [membersDialogOpen, setMembersDialogOpen] = useState(false);
+  const [registeringExternalIds, setRegisteringExternalIds] = useState(false);
 
   const isActive = event.status === "ACTIVE";
 
@@ -126,6 +129,56 @@ export function EventDetail({
     const res = await deleteProductAction({ productId });
     if (res?.error) setError(res.error);
     else refresh();
+  }
+
+  async function handleRegisterExternalIds() {
+    if (registeringExternalIds) return;
+    setError(null);
+    setRegisteringExternalIds(true);
+    try {
+      const response = await fetch(
+        `/api/events/${event.id}/external-ids`,
+        { method: "POST" },
+      );
+      const result = (await response.json().catch(() => null)) as {
+        updated?: number;
+        remaining?: number;
+        error?: string;
+      } | null;
+
+      if (!response.ok) {
+        const knownErrors: Record<string, string> = {
+          priceFinderNotConfigured: tErrors("priceFinderNotConfigured"),
+          priceFinderUnreachable: tErrors("priceFinderUnreachable"),
+          priceFinderRejected: tErrors("priceFinderRejected"),
+          eventNotFound: tErrors("eventNotFound"),
+        };
+        throw new Error(
+          (result?.error && knownErrors[result.error]) ||
+            t("externalIdsError"),
+        );
+      }
+
+      const updated = result?.updated ?? 0;
+      const remaining = result?.remaining ?? 0;
+      toast.add({
+        type: updated > 0 ? "success" : "info",
+        title:
+          updated > 0
+            ? t("externalIdsRegistered", { count: updated })
+            : t("noExternalIdsRegistered"),
+        description: t("externalIdsRemaining", { count: remaining }),
+      });
+      refresh();
+    } catch (e) {
+      toast.add({
+        type: "error",
+        title: t("externalIdsError"),
+        description: e instanceof Error ? e.message : t("externalIdsError"),
+      });
+    } finally {
+      setRegisteringExternalIds(false);
+    }
   }
 
   return (
@@ -188,6 +241,17 @@ export function EventDetail({
                 </DropdownMenuItem>
                 <DropdownMenuItem onClick={() => setMembersDialogOpen(true)}>
                   {t("manageMembers")}
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  disabled={registeringExternalIds}
+                  onClick={handleRegisterExternalIds}
+                >
+                  <RefreshCw
+                    className={registeringExternalIds ? "animate-spin" : ""}
+                  />
+                  {registeringExternalIds
+                    ? t("registeringExternalIds")
+                    : t("registerExternalIds")}
                 </DropdownMenuItem>
                 <DropdownMenuItem onClick={() => setCancelDialogOpen(true)}>
                   {t("cancelEvent")}

@@ -285,6 +285,7 @@ export async function updateProductAction(data: {
         title: true,
         author: true,
         price: true,
+        externalId: true,
         status: true,
         event: { select: { id: true, status: true } },
       },
@@ -293,8 +294,8 @@ export async function updateProductAction(data: {
     if (!(await requireEventManager(product.event.id))) return { error: t("notManager") };
 
     // A product that the valuation service could not register becomes printable
-    // once the manager fills in the details it was missing. Only promote when
-    // the edit does not explicitly choose a status.
+    // once the manager fills in the details it was missing. It can only move to
+    // registered when it also has an external id; otherwise it stays processed.
     if (parsed.data.status === undefined) {
       const promotableStatuses: readonly string[] = [
         ProductStatus.ADDED,
@@ -311,9 +312,23 @@ export async function updateProductAction(data: {
               ? Number(product.price)
               : null;
         if (title && author && price !== null && price > 0) {
-          parsed.data.status = ProductStatus.REGISTERED;
+          parsed.data.status = product.externalId
+            ? ProductStatus.REGISTERED
+            : ProductStatus.PROCESSED;
         }
       }
+    }
+
+    // Keep the invariant "processed means missing external id": a product can
+    // only be registered when the external id exists, and only products without
+    // one can be processed.
+    if (parsed.data.status === ProductStatus.REGISTERED && !product.externalId) {
+      parsed.data.status = ProductStatus.PROCESSED;
+    } else if (
+      parsed.data.status === ProductStatus.PROCESSED &&
+      product.externalId
+    ) {
+      parsed.data.status = ProductStatus.REGISTERED;
     }
 
     await prisma.product.update({ where: { id: data.productId }, data: parsed.data });
@@ -451,6 +466,11 @@ export async function printProductsAction(data: { eventId: string; productIds: s
     if (!event) return { error: t("eventNotFound") };
     if (!(await requireEventManager(event.id))) return { error: t("notManager") };
     if (!event.printTemplate) return { error: "noPrintTemplate" };
+    // The external id is rendered on the label (and its QR code), so printing
+    // cannot proceed while any selected product is missing one.
+    if (event.products.some((product) => !product.externalId)) {
+      return { error: t("productMissingExternalId") };
+    }
 
     const serviceUrl = process.env.NEXT_PRINTER_SERVICE_URL;
     const webhookBase = process.env.NEXT_APPLICATION_URL;
