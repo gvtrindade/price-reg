@@ -196,12 +196,14 @@ export function PrintingTab({
   queuedProducts,
   printingProducts,
   printedProducts,
+  canManage,
   t,
 }: {
   event: EventData;
   queuedProducts: ProductRow[];
   printingProducts: ProductRow[];
   printedProducts: ProductRow[];
+  canManage: boolean;
   t: (key: string, values?: Record<string, string | number>) => string;
 }) {
   const router = useRouter();
@@ -251,14 +253,16 @@ export function PrintingTab({
       <section className="space-y-3">
         <div className="flex items-center justify-between gap-4">
           <h2 className="text-xl font-semibold">{t("queuedToPrint")}</h2>
-          <Button
-            size="sm"
-            onClick={handlePrint}
-            disabled={selectedProductIds.size === 0 || isPrinting}
-          >
-            <Printer />
-            {isPrinting ? t("printing") : t("print")}
-          </Button>
+          {canManage && (
+            <Button
+              size="sm"
+              onClick={handlePrint}
+              disabled={selectedProductIds.size === 0 || isPrinting}
+            >
+              <Printer />
+              {isPrinting ? t("printing") : t("print")}
+            </Button>
+          )}
         </div>
         {queuedProducts.length === 0 ? (
           <p className="text-sm text-muted-foreground">{t("noProducts")}</p>
@@ -286,7 +290,7 @@ export function PrintingTab({
             event={event}
             t={t}
             onStopPrint={handleStopPrint}
-            showMenu
+            showMenu={canManage}
           />
         )}
       </section>
@@ -306,7 +310,7 @@ export function PrintingTab({
             event={event}
             t={t}
             onStopPrint={handleStopPrint}
-            showMenu
+            showMenu={canManage}
           />
         )}
       </section>

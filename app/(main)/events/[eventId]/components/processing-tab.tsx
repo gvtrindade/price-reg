@@ -1,7 +1,6 @@
 "use client";
 
 import { ProductRow, EventData, CONSERVATION_LABELS } from "./event-detail";
-import { InlineEdit } from "@/components/inline-edit";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -24,7 +23,7 @@ import { Trash2 } from "lucide-react";
 function ProductListItem({
   product,
   event,
-  isManager,
+  canManage,
   isActive,
   t,
   tState,
@@ -33,7 +32,7 @@ function ProductListItem({
 }: {
   product: ProductRow;
   event: EventData;
-  isManager: boolean;
+  canManage: boolean;
   isActive: boolean;
   t: (key: string, values?: Record<string, string | number>) => string;
   tState: (key: "asNew" | "nearFine" | "good" | "fair") => string;
@@ -70,7 +69,7 @@ function ProductListItem({
       <span className="shrink-0 text-sm tabular-nums">
         {product.price ?? "—"}
       </span>
-      {isManager && isActive && (
+      {canManage && isActive && (
         <div className="relative z-10 flex shrink-0 items-center gap-1">
           <AlertDialog>
             <AlertDialogTrigger
@@ -114,7 +113,7 @@ function ProductListItem({
 function ProductList({
   products,
   event,
-  isManager,
+  canManage,
   isActive,
   t,
   tState,
@@ -123,7 +122,7 @@ function ProductList({
 }: {
   products: ProductRow[];
   event: EventData;
-  isManager: boolean;
+  canManage: boolean;
   isActive: boolean;
   t: (key: string, values?: Record<string, string | number>) => string;
   tState: (key: "asNew" | "nearFine" | "good" | "fair") => string;
@@ -138,7 +137,7 @@ function ProductList({
           key={product.id}
           product={product}
           event={event}
-          isManager={isManager}
+          canManage={canManage}
           isActive={isActive}
           t={t}
           tState={tState}
@@ -153,7 +152,7 @@ function ProductList({
 export function ProcessingTab({
   event,
   products,
-  isManager,
+  canManage,
   isActive,
   t,
   tState,
@@ -162,7 +161,7 @@ export function ProcessingTab({
 }: {
   event: EventData;
   products: ProductRow[];
-  isManager: boolean;
+  canManage: boolean;
   isActive: boolean;
   t: (key: string, values?: Record<string, string | number>) => string;
   tState: (key: "asNew" | "nearFine" | "good" | "fair") => string;
@@ -185,7 +184,7 @@ export function ProcessingTab({
         <ProductList
           products={products}
           event={event}
-          isManager={isManager}
+          canManage={canManage}
           isActive={isActive}
           t={t}
           tState={tState}

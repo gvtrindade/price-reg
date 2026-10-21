@@ -1,4 +1,5 @@
 import { auth } from "@/lib/auth";
+import { isManagerRole } from "@/lib/event-access";
 import { prisma } from "@/lib/prisma";
 import { EventDetail } from "./components/event-detail";
 import { headers } from "next/headers";
@@ -13,7 +14,7 @@ export default async function EventDetailPage({
   if (!session?.user) redirect("/login");
 
   const roles = (session.user.roles as string[] | undefined) ?? [];
-  const isManager = roles.includes("MANAGER") || roles.includes("ADMIN");
+  const isManager = isManagerRole(roles);
 
   const { eventId } = await params;
   const event = await prisma.event.findUnique({
@@ -34,9 +35,21 @@ export default async function EventDetailPage({
       printTemplate: {
         select: { id: true },
       },
+      eventUsers: isManager
+        ? { select: { userId: true } }
+        : { where: { userId: session.user.id }, select: { userId: true } },
     },
   });
   if (!event) redirect("/events");
+
+  const assignedUserIds = event.eventUsers.map((eventUser) => eventUser.userId);
+  const canManageProducts = isManager || assignedUserIds.includes(session.user.id);
+  const users = isManager
+    ? await prisma.user.findMany({
+        orderBy: { name: "asc" },
+        select: { id: true, name: true, email: true },
+      })
+    : [];
 
   return (
     <EventDetail
@@ -51,6 +64,9 @@ export default async function EventDetailPage({
         })),
       }}
       isManager={isManager}
+      canManageProducts={canManageProducts}
+      users={users}
+      assignedUserIds={assignedUserIds}
     />
   );
 }

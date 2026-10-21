@@ -309,6 +309,11 @@
     "cancel": "Cancel",
     "changeTemplate": "Change template",
     "newTemplate": "New template",
+    "manageMembers": "Manage members",
+    "membersTitle": "Event members",
+    "membersDescription": "Members can edit product data and print products for this event.",
+    "noUsers": "No users available.",
+    "close": "Close",
     "print": "Print",
     "printing": "Printing..."
   },

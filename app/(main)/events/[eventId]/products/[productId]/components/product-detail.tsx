@@ -57,13 +57,13 @@ export function ProductDetail({
   product,
   eventId,
   eventActive,
-  isManager,
+  canManage,
   canReprocess,
 }: {
   product: ProductData;
   eventId: string;
   eventActive: boolean;
-  isManager: boolean;
+  canManage: boolean;
   canReprocess: boolean;
 }) {
   const t = useTranslations("ProductDetail");
@@ -74,7 +74,7 @@ export function ProductDetail({
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [reprocessing, setReprocessing] = useState(false);
 
-  const canEdit = isManager && eventActive;
+  const canEdit = canManage && eventActive;
 
   function save(
     field: "title" | "author" | "price" | "conservationState" | "status",
@@ -116,7 +116,7 @@ export function ProductDetail({
             onError={setError}
           />
         </h1>
-        {isManager && (
+        {canManage && (
           <DropdownMenu>
             <DropdownMenuTrigger
               render={

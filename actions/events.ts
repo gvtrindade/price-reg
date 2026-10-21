@@ -2,6 +2,7 @@
 
 import * as Sentry from "@sentry/nextjs";
 import { auth } from "@/lib/auth";
+import { canManageEvent, isManagerRole } from "@/lib/event-access";
 import { ProductStatus, REPROCESSABLE_STATUSES } from "@/lib/product-status";
 import { prisma } from "@/lib/prisma";
 import { webhookToken, printResultWebhookToken } from "@/lib/webhook-token";
@@ -17,8 +18,18 @@ async function requireSession() {
 async function requireManager() {
   const session = await auth.api.getSession({ headers: await headers() });
   const roles = (session?.user.roles as string[] | undefined) ?? [];
-  if (!session?.user || !(roles.includes("MANAGER") || roles.includes("ADMIN")))
-    return null;
+  if (!session?.user || !isManagerRole(roles)) return null;
+  return session;
+}
+
+/**
+ * Allows global managers/admins and users assigned to the given event.
+ */
+async function requireEventManager(eventId: string) {
+  const session = await auth.api.getSession({ headers: await headers() });
+  if (!session?.user) return null;
+  const roles = (session.user.roles as string[] | undefined) ?? [];
+  if (!(await canManageEvent(session.user.id, roles, eventId))) return null;
   return session;
 }
 
@@ -60,6 +71,41 @@ export async function cancelEventAction(data: { eventId: string }) {
       data: { status: "INACTIVE" },
     });
     if (count === 0) return { error: t("eventNotFound") };
+    return { error: null };
+  });
+}
+
+export async function assignEventUserAction(data: { eventId: string; userId: string }) {
+  return Sentry.withServerActionInstrumentation("assignEventUserAction", async () => {
+    const t = await getTranslations("Errors");
+    if (!(await requireManager())) return { error: t("notManager") };
+
+    const [event, user] = await Promise.all([
+      prisma.event.findUnique({ where: { id: data.eventId }, select: { id: true } }),
+      prisma.user.findUnique({ where: { id: data.userId }, select: { id: true } }),
+    ]);
+    if (!event) return { error: t("eventNotFound") };
+    if (!user) return { error: t("userNotFound") };
+
+    await prisma.eventUser.upsert({
+      where: {
+        eventId_userId: { eventId: data.eventId, userId: data.userId },
+      },
+      create: { eventId: data.eventId, userId: data.userId },
+      update: {},
+    });
+    return { error: null };
+  });
+}
+
+export async function unassignEventUserAction(data: { eventId: string; userId: string }) {
+  return Sentry.withServerActionInstrumentation("unassignEventUserAction", async () => {
+    const t = await getTranslations("Errors");
+    if (!(await requireManager())) return { error: t("notManager") };
+
+    await prisma.eventUser.deleteMany({
+      where: { eventId: data.eventId, userId: data.userId },
+    });
     return { error: null };
   });
 }
@@ -228,7 +274,6 @@ export async function updateProductAction(data: {
 }) {
   return Sentry.withServerActionInstrumentation("updateProductAction", async () => {
     const t = await getTranslations("Errors");
-    if (!(await requireManager())) return { error: t("notManager") };
 
     const parsed = parseProductData(data);
     if (parsed.error) return { error: t(parsed.error) };
@@ -241,10 +286,11 @@ export async function updateProductAction(data: {
         author: true,
         price: true,
         status: true,
-        event: { select: { status: true } },
+        event: { select: { id: true, status: true } },
       },
     });
     if (!product || product.event.status !== "ACTIVE") return { error: t("productNotFound") };
+    if (!(await requireEventManager(product.event.id))) return { error: t("notManager") };
 
     // A product that the valuation service could not register becomes printable
     // once the manager fills in the details it was missing. Only promote when
@@ -278,13 +324,13 @@ export async function updateProductAction(data: {
 export async function reprocessProductAction(data: { productId: string }) {
   return Sentry.withServerActionInstrumentation("reprocessProductAction", async () => {
     const t = await getTranslations("Errors");
-    if (!(await requireManager())) return { error: t("notManager") };
 
     const product = await prisma.product.findUnique({
       where: { id: data.productId },
       include: { event: { select: { id: true, status: true } } },
     });
     if (!product || product.event.status !== "ACTIVE") return { error: t("productNotFound") };
+    if (!(await requireEventManager(product.event.id))) return { error: t("notManager") };
     if (!REPROCESSABLE_STATUSES.includes(product.status))
       return { error: t("productNotRegistered") };
 
@@ -331,10 +377,15 @@ export async function reprocessProductAction(data: { productId: string }) {
 export async function deleteProductAction(data: { productId: string }) {
   return Sentry.withServerActionInstrumentation("deleteProductAction", async () => {
     const t = await getTranslations("Errors");
-    if (!(await requireManager())) return { error: t("notManager") };
 
-    const { count } = await prisma.product.deleteMany({ where: { id: data.productId } });
-    if (count === 0) return { error: t("productNotFound") };
+    const product = await prisma.product.findUnique({
+      where: { id: data.productId },
+      select: { eventId: true },
+    });
+    if (!product) return { error: t("productNotFound") };
+    if (!(await requireEventManager(product.eventId))) return { error: t("notManager") };
+
+    await prisma.product.delete({ where: { id: data.productId } });
     return { error: null };
   });
 }
@@ -386,7 +437,6 @@ export async function deletePrintTemplateAction(data: { eventId: string }) {
 export async function printProductsAction(data: { eventId: string; productIds: string[] }) {
   return Sentry.withServerActionInstrumentation("printProductsAction", async () => {
     const t = await getTranslations("Errors");
-    if (!(await requireManager())) return { error: t("notManager") };
 
     const event = await prisma.event.findUnique({
       where: { id: data.eventId },
@@ -399,6 +449,7 @@ export async function printProductsAction(data: { eventId: string; productIds: s
       },
     });
     if (!event) return { error: t("eventNotFound") };
+    if (!(await requireEventManager(event.id))) return { error: t("notManager") };
     if (!event.printTemplate) return { error: "noPrintTemplate" };
 
     const serviceUrl = process.env.NEXT_PRINTER_SERVICE_URL;

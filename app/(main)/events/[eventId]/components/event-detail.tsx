@@ -6,6 +6,7 @@ import {
   updateEventTitleAction,
 } from "@/actions/events";
 import { AddProductDrawer } from "./add-product-drawer";
+import { EventMembersDialog, type EventMemberUser } from "./event-members-dialog";
 import { ProcessingTab } from "./processing-tab";
 import { PrintingTab } from "./printing-tab";
 import { TotalsTab } from "./totals-tab";
@@ -74,9 +75,15 @@ const tabClass = cn(
 export function EventDetail({
   event,
   isManager,
+  canManageProducts,
+  users,
+  assignedUserIds,
 }: {
   event: EventData;
   isManager: boolean;
+  canManageProducts: boolean;
+  users: EventMemberUser[];
+  assignedUserIds: string[];
 }) {
   const t = useTranslations("EventDetail");
   const tState = useTranslations("ConservationState");
@@ -84,6 +91,7 @@ export function EventDetail({
   const router = useRouter();
   const [error, setError] = useState<string | null>(null);
   const [cancelDialogOpen, setCancelDialogOpen] = useState(false);
+  const [membersDialogOpen, setMembersDialogOpen] = useState(false);
 
   const isActive = event.status === "ACTIVE";
 
@@ -178,6 +186,9 @@ export function EventDetail({
                 >
                   {event.hasTemplate ? t("changeTemplate") : t("newTemplate")}
                 </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => setMembersDialogOpen(true)}>
+                  {t("manageMembers")}
+                </DropdownMenuItem>
                 <DropdownMenuItem onClick={() => setCancelDialogOpen(true)}>
                   {t("cancelEvent")}
                 </DropdownMenuItem>
@@ -215,6 +226,13 @@ export function EventDetail({
                 </AlertDialogFooter>
               </AlertDialogContent>
             </AlertDialog>
+            <EventMembersDialog
+              open={membersDialogOpen}
+              onOpenChange={setMembersDialogOpen}
+              eventId={event.id}
+              users={users}
+              assignedUserIds={assignedUserIds}
+            />
           </>
         )}
       </div>
@@ -238,7 +256,7 @@ export function EventDetail({
           <ProcessingTab
             event={event}
             products={processingProducts}
-            isManager={isManager}
+            canManage={canManageProducts}
             isActive={isActive}
             t={t}
             tState={tState}
@@ -253,6 +271,7 @@ export function EventDetail({
             queuedProducts={queuedProducts}
             printingProducts={printingProducts}
             printedProducts={printedProducts}
+            canManage={canManageProducts}
             t={t}
           />
         </Tabs.Panel>

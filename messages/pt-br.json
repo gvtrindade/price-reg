@@ -309,6 +309,11 @@
     "cancel": "Cancelar",
     "changeTemplate": "Alterar modelo",
     "newTemplate": "Novo modelo",
+    "manageMembers": "Gerenciar membros",
+    "membersTitle": "Membros do evento",
+    "membersDescription": "Os membros podem editar os dados dos produtos e imprimir produtos deste evento.",
+    "noUsers": "Nenhum usuário disponível.",
+    "close": "Fechar",
     "print": "Imprimir",
     "printing": "Imprimindo..."
   },
