@@ -17,6 +17,7 @@ import {
   DrawerDescription,
   DrawerFooter,
 } from "@/components/ui/drawer";
+import { Input } from "@/components/ui/input";
 import { ProductStatus } from "@/lib/product-status";
 import { Ellipsis, Printer } from "lucide-react";
 import Link from "next/link";
@@ -208,8 +209,18 @@ export function PrintingTab({
 }) {
   const router = useRouter();
   const [error, setError] = useState<string | null>(null);
+  const [search, setSearch] = useState("");
   const [selectedProductIds, setSelectedProductIds] = useState<Set<string>>(new Set());
   const [isPrinting, setIsPrinting] = useState(false);
+
+  const query = search.trim().toLowerCase();
+  const filteredQueuedProducts = query
+    ? queuedProducts.filter(
+        (product) =>
+          (product.title ?? "").toLowerCase().includes(query) ||
+          (product.code ?? "").toLowerCase().includes(query),
+      )
+    : queuedProducts;
 
   function refresh() {
     router.refresh();
@@ -264,11 +275,19 @@ export function PrintingTab({
             </Button>
           )}
         </div>
+        <Input
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          placeholder={t("searchQueuePlaceholder")}
+          aria-label={t("searchQueuePlaceholder")}
+        />
         {queuedProducts.length === 0 ? (
           <p className="text-sm text-muted-foreground">{t("noProducts")}</p>
+        ) : filteredQueuedProducts.length === 0 ? (
+          <p className="text-sm text-muted-foreground">{t("noResults")}</p>
         ) : (
           <ul className="divide-y rounded-lg border">
-            {queuedProducts.map((product) => (
+            {filteredQueuedProducts.map((product) => (
               <QueuedProductListItem
                 key={product.id}
                 product={product}

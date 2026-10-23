@@ -1,10 +1,12 @@
 "use client";
 
+import { StatusGuideDialog } from "@/components/status-guide-dialog";
 import { Button } from "@/components/ui/button";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { authClient } from "@/lib/auth-client";
 import {
   CalendarDays,
+  CircleHelp,
   LogOut,
   PanelLeft,
   PanelLeftClose,
@@ -25,6 +27,7 @@ export default function Sidebar({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
   const [open, setOpen] = useState(false);
+  const [statusGuideOpen, setStatusGuideOpen] = useState(false);
 
   async function handleSignOut() {
     await authClient.signOut();
@@ -103,6 +106,17 @@ export default function Sidebar({ children }: { children: React.ReactNode }) {
               <Button
                 variant="ghost"
                 className="justify-start gap-3"
+                onClick={() => {
+                  setOpen(false);
+                  setStatusGuideOpen(true);
+                }}
+              >
+                <CircleHelp className="size-4 shrink-0" />
+                <span>{t("statusGuide")}</span>
+              </Button>
+              <Button
+                variant="ghost"
+                className="justify-start gap-3"
                 aria-label={t("settings")}
                 render={<Link href="/settings" onClick={() => setOpen(false)} />}
                 nativeButton={false}
@@ -123,6 +137,11 @@ export default function Sidebar({ children }: { children: React.ReactNode }) {
           </aside>
         </>
       )}
+
+      <StatusGuideDialog
+        open={statusGuideOpen}
+        onOpenChange={setStatusGuideOpen}
+      />
     </div>
   );
 }

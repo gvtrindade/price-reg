@@ -203,7 +203,20 @@
     "darkMode": "Modo escuro",
     "lightMode": "Modo claro",
     "collapse": "Recolher menu lateral",
-    "expand": "Expandir menu lateral"
+    "expand": "Expandir menu lateral",
+    "statusGuide": "Guia de status"
+  },
+  "StatusGuide": {
+    "title": "Status dos produtos",
+    "description": "O que cada status significa e quando um produto chega a ele.",
+    "added": "O produto acabou de ser registrado e aguarda a conclusão da busca de preço.",
+    "registered": "O produto tem preço e ID externo. Está pronto para ser impresso.",
+    "processed": "O produto tem preço, mas ainda não tem ID externo. Registre o ID externo para poder imprimi-lo.",
+    "error": "A busca de preço falhou. Abra o produto para completar os dados ou reprocessá-lo.",
+    "notFound": "O serviço de preços não encontrou uma avaliação para este produto. Verifique os dados e reprocesse.",
+    "queued": "O produto foi selecionado para impressão e aguarda o serviço de impressão.",
+    "printing": "O trabalho de impressão está em andamento.",
+    "printed": "A etiqueta foi impressa com sucesso."
   },
   "Settings": {
     "title": "Configurações",
@@ -302,6 +315,7 @@
     "printingTab": "Impressão",
     "totalsTab": "Totais",
     "queuedToPrint": "Na fila de impressão",
+    "searchQueuePlaceholder": "Buscar na fila por nome ou código",
     "printing": "Imprimindo",
     "printed": "Impresso",
     "stopPrint": "Parar impressão",

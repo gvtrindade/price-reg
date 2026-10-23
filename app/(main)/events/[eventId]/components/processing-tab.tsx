@@ -1,6 +1,6 @@
 "use client";
 
-import { ProductRow, EventData, CONSERVATION_LABELS } from "./event-detail";
+import { ProductRow, EventData } from "./event-detail";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -20,13 +20,21 @@ import {
 import Link from "next/link";
 import { Trash2 } from "lucide-react";
 
+/** Shows the first and last name from a full name, dropping middle names. */
+function formatAddedBy(name: string | null): string {
+  if (!name) return "—";
+  const parts = name.trim().split(/\s+/).filter(Boolean);
+  if (parts.length === 0) return "—";
+  if (parts.length === 1) return parts[0];
+  return `${parts[0]} ${parts[parts.length - 1]}`;
+}
+
 function ProductListItem({
   product,
   event,
   canManage,
   isActive,
   t,
-  tState,
   tStatus,
   onDelete,
 }: {
@@ -35,7 +43,6 @@ function ProductListItem({
   canManage: boolean;
   isActive: boolean;
   t: (key: string, values?: Record<string, string | number>) => string;
-  tState: (key: "asNew" | "nearFine" | "good" | "fair") => string;
   tStatus: (key: "added" | "registered" | "processed" | "error" | "notFound" | "queued" | "printing" | "printed") => string;
   onDelete: (productId: string) => void;
 }) {
@@ -52,14 +59,7 @@ function ProductListItem({
           {product.title ?? product.code ?? "—"}
         </p>
         <p className="text-sm text-muted-foreground">
-          {tState(
-            (CONSERVATION_LABELS[product.conservationState] ??
-              product.conservationState) as
-              | "asNew"
-              | "nearFine"
-              | "good"
-              | "fair",
-          )}{" "}
+          {formatAddedBy(product.addedByName)}{" "}
           ·{" "}
           {statusKey
             ? tStatus(statusKey as "added" | "registered" | "processed" | "error" | "notFound" | "queued" | "printing" | "printed")
@@ -116,7 +116,6 @@ function ProductList({
   canManage,
   isActive,
   t,
-  tState,
   tStatus,
   onDelete,
 }: {
@@ -125,7 +124,6 @@ function ProductList({
   canManage: boolean;
   isActive: boolean;
   t: (key: string, values?: Record<string, string | number>) => string;
-  tState: (key: "asNew" | "nearFine" | "good" | "fair") => string;
   tStatus: (key: "added" | "registered" | "processed" | "error" | "notFound" | "queued" | "printing" | "printed") => string;
   onDelete: (productId: string) => void;
 }) {
@@ -140,7 +138,6 @@ function ProductList({
           canManage={canManage}
           isActive={isActive}
           t={t}
-          tState={tState}
           tStatus={tStatus}
           onDelete={onDelete}
         />
@@ -155,7 +152,6 @@ export function ProcessingTab({
   canManage,
   isActive,
   t,
-  tState,
   tStatus,
   onDelete,
 }: {
@@ -164,7 +160,6 @@ export function ProcessingTab({
   canManage: boolean;
   isActive: boolean;
   t: (key: string, values?: Record<string, string | number>) => string;
-  tState: (key: "asNew" | "nearFine" | "good" | "fair") => string;
   tStatus: (key: "added" | "registered" | "processed" | "error" | "notFound" | "queued" | "printing" | "printed") => string;
   onDelete: (productId: string) => void;
 }) {
@@ -187,7 +182,6 @@ export function ProcessingTab({
           canManage={canManage}
           isActive={isActive}
           t={t}
-          tState={tState}
           tStatus={tStatus}
           onDelete={onDelete}
         />

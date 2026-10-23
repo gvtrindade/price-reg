@@ -51,6 +51,7 @@ export interface ProductRow {
   conservationState: string;
   status: string;
   price: string | null;
+  addedByName: string | null;
 }
 
 export interface EventData {
@@ -323,7 +324,6 @@ export function EventDetail({
             canManage={canManageProducts}
             isActive={isActive}
             t={t}
-            tState={tState}
             tStatus={tStatus}
             onDelete={handleDeleteProduct}
           />

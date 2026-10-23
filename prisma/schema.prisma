@@ -23,19 +23,20 @@ enum Role {
 }
 
 model User {
-  id            String   @id @default(cuid())
-  name          String
-  email         String   @unique
-  emailVerified Boolean
-  image         String?
-  roles         Role[]   @default([VOLUNTEER])
-  mustChangePassword Boolean @default(false) @map("must_change_password")
-  createdAt     DateTime @default(now()) @db.Timestamptz
-  updatedAt     DateTime @updatedAt @db.Timestamptz
+  id                 String   @id @default(cuid())
+  name               String
+  email              String   @unique
+  emailVerified      Boolean
+  image              String?
+  roles              Role[]   @default([VOLUNTEER])
+  mustChangePassword Boolean  @default(false) @map("must_change_password")
+  createdAt          DateTime @default(now()) @db.Timestamptz
+  updatedAt          DateTime @updatedAt @db.Timestamptz
 
-  sessions   Session[]
-  accounts   Account[]
-  eventUsers EventUser[]
+  sessions      Session[]
+  accounts      Account[]
+  eventUsers    EventUser[]
+  addedProducts Product[]   @relation("ProductAddedBy")
 
   @@map("user")
 }
@@ -102,9 +103,9 @@ model Event {
   createdAt DateTime    @default(now()) @db.Timestamptz
   updatedAt DateTime    @updatedAt @db.Timestamptz
 
-  products          Product[]
-  eventUsers     EventUser[]
-  printTemplate  PrintTemplate?
+  products      Product[]
+  eventUsers    EventUser[]
+  printTemplate PrintTemplate?
 
   @@map("event")
 }
@@ -136,6 +137,10 @@ model Product {
   eventId String
   event   Event  @relation(fields: [eventId], references: [id], onDelete: Cascade)
 
+  addedById String? @map("added_by_id")
+  addedBy   User?   @relation("ProductAddedBy", fields: [addedById], references: [id], onDelete: SetNull)
+
+  @@index([addedById])
   @@map("product")
 }
 

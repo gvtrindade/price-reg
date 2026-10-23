@@ -115,7 +115,20 @@
     "darkMode": "Dark mode",
     "lightMode": "Light mode",
     "collapse": "Collapse sidebar",
-    "expand": "Expand sidebar"
+    "expand": "Expand sidebar",
+    "statusGuide": "Status guide"
+  },
+  "StatusGuide": {
+    "title": "Product statuses",
+    "description": "What each status means and when a product reaches it.",
+    "added": "The product was just registered and is waiting for the price lookup to finish.",
+    "registered": "The product has a price and an external id. It is ready to be printed.",
+    "processed": "The product has a price but no external id yet. Register its external id so it can be printed.",
+    "error": "The price lookup failed. Open the product to complete its details or reprocess it.",
+    "notFound": "The price service could not find a valuation for this product. Check its details and reprocess it.",
+    "queued": "The product was selected for printing and is waiting for the print service.",
+    "printing": "The print job is in progress.",
+    "printed": "The label was printed successfully."
   },
   "Settings": {
     "title": "Settings",
@@ -302,6 +315,7 @@
     "printingTab": "Printing",
     "totalsTab": "Totals",
     "queuedToPrint": "Queued to print",
+    "searchQueuePlaceholder": "Search the queue by name or code",
     "printing": "Printing",
     "printed": "Printed",
     "stopPrint": "Stop print",

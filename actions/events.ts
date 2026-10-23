@@ -172,7 +172,8 @@ export async function addProductAction(data: {
 }) {
   return Sentry.withServerActionInstrumentation("addProductAction", async () => {
     const t = await getTranslations("Errors");
-    if (!(await requireSession())) return { error: t("sessionExpired") };
+    const session = await requireSession();
+    if (!session) return { error: t("sessionExpired") };
 
     const title = data.title?.trim() || null;
     const author = data.author?.trim() || null;
@@ -235,8 +236,11 @@ export async function addProductAction(data: {
         code,
         conservationState,
         status: "added",
+        addedById: session.user.id,
       },
-      update: {},
+      // The webhook may have created the row first, without a user, so always
+      // attribute it to the volunteer performing the lookup.
+      update: { addedById: session.user.id },
     });
     return { error: null, id: productId };
   });

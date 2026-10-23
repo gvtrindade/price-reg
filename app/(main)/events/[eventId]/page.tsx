@@ -30,6 +30,7 @@ export default async function EventDetailPage({
           conservationState: true,
           status: true,
           price: true,
+          addedBy: { select: { name: true } },
         },
       },
       printTemplate: {
@@ -44,6 +45,10 @@ export default async function EventDetailPage({
 
   const assignedUserIds = event.eventUsers.map((eventUser) => eventUser.userId);
   const canManageProducts = isManager || assignedUserIds.includes(session.user.id);
+
+  // Volunteers may only access events they have been assigned to. Managers and
+  // admins can access every event, so no assignment is required for them.
+  if (!canManageProducts) redirect("/events");
   const users = isManager
     ? await prisma.user.findMany({
         orderBy: { name: "asc" },
@@ -61,6 +66,7 @@ export default async function EventDetailPage({
         products: event.products.map((product) => ({
           ...product,
           price: product.price === null ? null : String(product.price),
+          addedByName: product.addedBy?.name ?? null,
         })),
       }}
       isManager={isManager}

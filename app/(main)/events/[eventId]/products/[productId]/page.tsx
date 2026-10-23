@@ -38,6 +38,9 @@ export default async function ProductDetailPage({
   const canManage =
     isManager || product.event.eventUsers.some((u) => u.userId === session.user.id);
 
+  // Volunteers may only access products of events they have been assigned to.
+  if (!canManage) redirect("/events");
+
   const fiveMinutesAgo = new Date(new Date().getTime() - 5 * 60 * 1000);
   const canReprocess =
     REPROCESSABLE_STATUSES.includes(product.status) && product.createdAt <= fiveMinutesAgo;
