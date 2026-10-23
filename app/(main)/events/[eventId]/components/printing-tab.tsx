@@ -271,7 +271,7 @@ export function PrintingTab({
               disabled={selectedProductIds.size === 0 || isPrinting}
             >
               <Printer />
-              {isPrinting ? t("printing") : t("print")}
+              {isPrinting ? t("printingEllipsis") : t("print")}
             </Button>
           )}
         </div>

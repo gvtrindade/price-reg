@@ -337,7 +337,7 @@
     "noUsers": "Nenhum usuário disponível.",
     "close": "Fechar",
     "print": "Imprimir",
-    "printing": "Imprimindo..."
+    "printingEllipsis": "Imprimindo..."
   },
   "ProductDetail": {
     "backToEvent": "Voltar ao evento",
