@@ -25,7 +25,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
-import { ArrowLeft, MoreHorizontal, RefreshCw } from "lucide-react";
+import { ArrowLeft, ChevronLeft, ChevronRight, MoreHorizontal, RefreshCw } from "lucide-react";
 import { useTranslations } from "next-intl";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -59,12 +59,16 @@ export function ProductDetail({
   eventActive,
   canManage,
   canReprocess,
+  previousProductId,
+  nextProductId,
 }: {
   product: ProductData;
   eventId: string;
   eventActive: boolean;
   canManage: boolean;
   canReprocess: boolean;
+  previousProductId: string | null;
+  nextProductId: string | null;
 }) {
   const t = useTranslations("ProductDetail");
   const tState = useTranslations("ConservationState");
@@ -90,6 +94,36 @@ export function ProductDetail({
 
   return (
     <main className="mx-auto max-w-2xl space-y-6 p-6">
+      {previousProductId && (
+        <Button
+          variant="outline"
+          size="icon-lg"
+          aria-label={t("previousProduct")}
+          className="fixed top-1/2 left-2 z-20 -translate-y-1/2 rounded-full shadow-sm md:left-6"
+          render={
+            <Link
+              href={`/events/${eventId}/products/${previousProductId}`}
+            />
+          }
+          nativeButton={false}
+        >
+          <ChevronLeft />
+        </Button>
+      )}
+      {nextProductId && (
+        <Button
+          variant="outline"
+          size="icon-lg"
+          aria-label={t("nextProduct")}
+          className="fixed top-1/2 right-2 z-20 -translate-y-1/2 rounded-full shadow-sm md:right-6"
+          render={
+            <Link href={`/events/${eventId}/products/${nextProductId}`} />
+          }
+          nativeButton={false}
+        >
+          <ChevronRight />
+        </Button>
+      )}
       <div>
         <Button
           variant="ghost"

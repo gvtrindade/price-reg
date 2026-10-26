@@ -51,6 +51,8 @@ export interface ProductRow {
   conservationState: string;
   status: string;
   price: string | null;
+  createdAt: Date;
+  addedById: string | null;
   addedByName: string | null;
 }
 
@@ -76,12 +78,14 @@ const tabClass = cn(
 
 export function EventDetail({
   event,
+  currentUserId,
   isManager,
   canManageProducts,
   users,
   assignedUserIds,
 }: {
   event: EventData;
+  currentUserId: string;
   isManager: boolean;
   canManageProducts: boolean;
   users: EventMemberUser[];
@@ -321,6 +325,7 @@ export function EventDetail({
           <ProcessingTab
             event={event}
             products={processingProducts}
+            currentUserId={currentUserId}
             canManage={canManageProducts}
             isActive={isActive}
             t={t}

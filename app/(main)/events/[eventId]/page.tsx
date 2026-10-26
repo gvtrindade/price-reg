@@ -30,6 +30,8 @@ export default async function EventDetailPage({
           conservationState: true,
           status: true,
           price: true,
+          createdAt: true,
+          addedById: true,
           addedBy: { select: { name: true } },
         },
       },
@@ -69,6 +71,7 @@ export default async function EventDetailPage({
           addedByName: product.addedBy?.name ?? null,
         })),
       }}
+      currentUserId={session.user.id}
       isManager={isManager}
       canManageProducts={canManageProducts}
       users={users}

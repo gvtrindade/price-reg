@@ -302,6 +302,9 @@
     "cancelled": "Cancelado",
     "products": "Produtos",
     "productCount": "{count, plural, =0 {Nenhum produto} one {# produto} other {# produtos}}",
+    "recentProducts": "Últimas 2 horas",
+    "noRecentProducts": "Você não registrou nenhum produto nas últimas 2 horas.",
+    "noOtherProducts": "Nenhum outro produto está em processamento.",
     "searchPlaceholder": "Buscar por nome ou autor",
     "noProducts": "Nenhum produto neste evento ainda.",
     "noResults": "Nenhum produto corresponde à sua busca.",
@@ -357,7 +360,9 @@
     "unnamed": "Sem nome",
     "notPriced": "Sem preço",
     "reprocess": "Reprocessar preço",
-    "reprocessing": "Reprocessando..."
+    "reprocessing": "Reprocessando...",
+    "previousProduct": "Produto anterior",
+    "nextProduct": "Próximo produto"
   },
   "AddProductDrawer": {
     "addProduct": "Adicionar produto",

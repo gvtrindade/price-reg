@@ -5,6 +5,7 @@ import { auth } from "@/lib/auth";
 import { canManageEvent, isManagerRole } from "@/lib/event-access";
 import { ProductStatus, REPROCESSABLE_STATUSES } from "@/lib/product-status";
 import { prisma } from "@/lib/prisma";
+import { toTitleCase } from "@/lib/title-case";
 import { webhookToken, printResultWebhookToken } from "@/lib/webhook-token";
 import { headers } from "next/headers";
 import { getTranslations } from "next-intl/server";
@@ -136,7 +137,7 @@ function parseProductData(data: {
   if (data.title !== undefined) {
     const title = data.title.trim();
     if (!title) return { error: "invalidTitle" as ProductFieldError };
-    out.title = title;
+    out.title = toTitleCase(title);
   }
   if (data.author !== undefined) {
     const author = data.author.trim();

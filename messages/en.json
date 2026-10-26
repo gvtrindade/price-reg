@@ -302,6 +302,9 @@
     "cancelled": "Cancelled",
     "products": "Products",
     "productCount": "{count, plural, =0 {No products} one {# product} other {# products}}",
+    "recentProducts": "Last 2 hours",
+    "noRecentProducts": "You have not registered any products in the last 2 hours.",
+    "noOtherProducts": "No other products are being processed.",
     "searchPlaceholder": "Search by name or author",
     "noProducts": "No products in this event yet.",
     "noResults": "No products match your search.",
@@ -357,7 +360,9 @@
     "unnamed": "Unnamed",
     "notPriced": "Not priced",
     "reprocess": "Reprocess price",
-    "reprocessing": "Reprocessing..."
+    "reprocessing": "Reprocessing...",
+    "previousProduct": "Previous product",
+    "nextProduct": "Next product"
   },
   "AddProductDrawer": {
     "addProduct": "Add product",
