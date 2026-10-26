@@ -203,7 +203,7 @@ export async function addProductAction(data: {
 
     let lookup: Response;
     try {
-      lookup = await fetch(new URL("/lookup", serviceUrl), {
+      lookup = await fetch(new URL("/lookup/bookstore", serviceUrl), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         cache: "no-store",
@@ -368,7 +368,7 @@ export async function reprocessProductAction(data: { productId: string }) {
 
     let lookup: Response;
     try {
-      lookup = await fetch(new URL("/lookup", serviceUrl), {
+      lookup = await fetch(new URL("/lookup/bookstore", serviceUrl), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         cache: "no-store",
