@@ -3,6 +3,7 @@
 import * as Sentry from "@sentry/nextjs";
 import { auth } from "@/lib/auth";
 import { canManageEvent, isManagerRole } from "@/lib/event-access";
+import { isBookCode } from "@/lib/product-code";
 import { ProductStatus, REPROCESSABLE_STATUSES } from "@/lib/product-status";
 import { prisma } from "@/lib/prisma";
 import { toTitleCase } from "@/lib/title-case";
@@ -193,6 +194,67 @@ export async function addProductAction(data: {
 
     const serviceUrl = process.env.NEXT_PRODUCT_PRICE_FINDER_URL;
     const webhookBase = process.env.NEXT_APPLICATION_URL;
+
+    // Products are not typed in the database: the barcode only routes the
+    // lookup. ISBNs go through the bookstore valuation service; any other
+    // EAN/UPC is a CD/DVD, looked up synchronously on Discogs (metadata only,
+    // no price). Manually entered data always wins over a lookup -- that is
+    // the DVD path, where everything is filled in by hand.
+    if (code && !isBookCode(code) && !title) {
+      if (!serviceUrl) return { error: t("priceFinderNotConfigured") };
+
+      const discogsProductId = crypto.randomUUID();
+      let discogsTitle: string | null = null;
+      let discogsAuthor: string | null = null;
+      let discogsStatus: string = ProductStatus.ERROR;
+
+      try {
+        const lookup = await fetch(new URL("/lookup/discogs", serviceUrl), {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          cache: "no-store",
+          signal: AbortSignal.timeout(15_000),
+          body: JSON.stringify({ code }),
+        });
+        if (lookup.ok) {
+          const result = (await lookup.json()) as {
+            status?: string;
+            title?: string;
+            artist?: string;
+          };
+          if (result.status === "ok") {
+            discogsTitle = result.title?.trim() || null;
+            discogsAuthor = result.artist?.trim() || null;
+            // No price is estimated for CDs/DVDs: the product waits for the
+            // manager to price it (updateProductAction then promotes it).
+            discogsStatus = ProductStatus.ADDED;
+          } else {
+            // Discogs does not catalog DVDs, and some CDs have no entry:
+            // leave the product for manual completion.
+            discogsStatus = ProductStatus.NOT_FOUND;
+          }
+        }
+        // An unavailable Discogs must never block adding the product: keep it
+        // as "error" so it is visible and can be reprocessed or filled by hand.
+      } catch {
+        discogsStatus = ProductStatus.ERROR;
+      }
+
+      await prisma.product.create({
+        data: {
+          id: discogsProductId,
+          eventId: data.eventId,
+          title: discogsTitle,
+          author: discogsAuthor,
+          code,
+          conservationState,
+          status: discogsStatus,
+          addedById: session.user.id,
+        },
+      });
+      return { error: null, id: discogsProductId };
+    }
+
     if (!serviceUrl || !webhookBase)
       return { error: t("priceFinderNotConfigured") };
 
@@ -309,14 +371,15 @@ export async function updateProductAction(data: {
       ];
       if (promotableStatuses.includes(product.status)) {
         const title = parsed.data.title ?? product.title;
-        const author = parsed.data.author ?? product.author;
+        // CDs/DVDs have no author (a DVD is completed with title + price only),
+        // so promotion must not depend on it.
         const price =
           parsed.data.price !== undefined
             ? parsed.data.price
             : product.price !== null
               ? Number(product.price)
               : null;
-        if (title && author && price !== null && price > 0) {
+        if (title && price !== null && price > 0) {
           parsed.data.status = product.externalId
             ? ProductStatus.REGISTERED
             : ProductStatus.PROCESSED;
@@ -358,9 +421,53 @@ export async function reprocessProductAction(data: { productId: string }) {
     if (product.createdAt > fiveMinutesAgo) return { error: t("productTooRecent") };
 
     const serviceUrl = process.env.NEXT_PRODUCT_PRICE_FINDER_URL;
+    if (!serviceUrl) return { error: t("priceFinderNotConfigured") };
+
+    // Non-ISBN codes are CDs/DVDs: re-run the synchronous Discogs lookup
+    // instead of sending them to the ISBN-only bookstore flow.
+    if (product.code && !isBookCode(product.code)) {
+      try {
+        const lookup = await fetch(new URL("/lookup/discogs", serviceUrl), {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          cache: "no-store",
+          signal: AbortSignal.timeout(15_000),
+          body: JSON.stringify({ code: product.code }),
+        });
+        if (!lookup.ok) {
+          const detail = await readLookupError(lookup);
+          return { error: detail || t("priceFinderRejected") };
+        }
+
+        const result = (await lookup.json()) as {
+          status?: string;
+          title?: string;
+          artist?: string;
+        };
+        if (result.status === "ok") {
+          await prisma.product.update({
+            where: { id: product.id },
+            data: {
+              title: result.title?.trim() || product.title,
+              author: result.artist?.trim() || product.author,
+              // Metadata found again: back to "added", only the price is missing.
+              status: ProductStatus.ADDED,
+            },
+          });
+        } else {
+          await prisma.product.update({
+            where: { id: product.id },
+            data: { status: ProductStatus.NOT_FOUND },
+          });
+        }
+        return { error: null };
+      } catch {
+        return { error: t("priceFinderUnreachable") };
+      }
+    }
+
     const webhookBase = process.env.NEXT_APPLICATION_URL;
-    if (!serviceUrl || !webhookBase)
-      return { error: t("priceFinderNotConfigured") };
+    if (!webhookBase) return { error: t("priceFinderNotConfigured") };
 
     const webhookUrl = new URL("/api/webhooks/product-valuation", webhookBase);
     webhookUrl.searchParams.set("productId", product.id);
