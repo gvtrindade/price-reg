@@ -464,18 +464,20 @@ export async function printProductsAction(data: { eventId: string; productIds: s
         printTemplate: { select: { blob: true } },
         products: {
           where: { id: { in: data.productIds } },
-          select: { id: true, title: true, author: true, price: true, externalId: true },
+          select: {
+            id: true,
+            title: true,
+            author: true,
+            code: true,
+            price: true,
+            externalId: true,
+          },
         },
       },
     });
     if (!event) return { error: t("eventNotFound") };
     if (!(await requireEventManager(event.id))) return { error: t("notManager") };
     if (!event.printTemplate) return { error: "noPrintTemplate" };
-    // The external id is rendered on the label (and its QR code), so printing
-    // cannot proceed while any selected product is missing one.
-    if (event.products.some((product) => !product.externalId)) {
-      return { error: t("productMissingExternalId") };
-    }
 
     const serviceUrl = process.env.NEXT_PRINTER_SERVICE_URL;
     const webhookBase = process.env.NEXT_APPLICATION_URL;
@@ -492,7 +494,11 @@ export async function printProductsAction(data: { eventId: string; productIds: s
       id: product.id,
       title: product.title ?? "",
       author: product.author ?? "",
+      code: product.code,
       price: product.price !== null ? Number(product.price) : null,
+      // The printer service reserves the external id (Ziontech/megabazar) when
+      // it is missing. Sending an existing one makes reprints reuse it instead
+      // of reserving a duplicate.
       external_id: product.externalId,
     }));
 

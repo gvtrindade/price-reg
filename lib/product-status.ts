@@ -37,7 +37,11 @@ export const PROCESSING_STATUSES: readonly string[] = [
 ];
 
 export const PRINTING_QUEUED_STATUSES: readonly string[] = [
+  // "processed" products are valued but have no external id yet: the printer
+  // service reserves it at print time. "registered" is kept for products that
+  // were printed/reserved before that moved to the printer service.
   ProductStatus.REGISTERED,
+  ProductStatus.PROCESSED,
   ProductStatus.QUEUED,
 ];
 
