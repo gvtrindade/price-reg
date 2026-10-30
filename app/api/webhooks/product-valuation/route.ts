@@ -23,7 +23,8 @@ function cleanText(value: unknown): string | null {
 function cleanPrice(value: unknown): number | null {
   if (typeof value !== "number" || !Number.isFinite(value) || value <= 0)
     return null;
-  return Math.round(value * 100) / 100;
+  // Suggested prices are always rounded down to a whole number.
+  return Math.floor(value);
 }
 
 export async function POST(request: NextRequest) {

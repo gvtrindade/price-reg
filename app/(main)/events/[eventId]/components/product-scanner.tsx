@@ -41,6 +41,93 @@ async function supportedCheck(
   return true;
 }
 
+/**
+ * BarcodeDetector is not available in every browser (e.g. Safari on iOS).
+ * Fall back to ZXing decoding video frames drawn onto a canvas.
+ */
+async function createZXingDetector(): Promise<BarcodeDetectorLike> {
+  const {
+    BarcodeFormat,
+    BinaryBitmap,
+    DecodeHintType,
+    HTMLCanvasElementLuminanceSource,
+    HybridBinarizer,
+    MultiFormatReader,
+  } = await import("@zxing/library");
+
+  const hints = new Map();
+  hints.set(DecodeHintType.POSSIBLE_FORMATS, [
+    BarcodeFormat.EAN_13,
+    BarcodeFormat.EAN_8,
+    BarcodeFormat.UPC_A,
+    BarcodeFormat.UPC_E,
+  ]);
+  hints.set(DecodeHintType.TRY_HARDER, true);
+  const reader = new MultiFormatReader();
+  reader.setHints(hints);
+
+  const canvas = document.createElement("canvas");
+  const context = canvas.getContext("2d", { willReadFrequently: true });
+
+  return {
+    detect: async (source) => {
+      const { videoWidth: width, videoHeight: height } =
+        source as HTMLVideoElement;
+      if (!context || !width || !height) return [];
+      canvas.width = width;
+      canvas.height = height;
+      context.drawImage(source, 0, 0, width, height);
+      const luminance = new HTMLCanvasElementLuminanceSource(canvas, true);
+      const bitmap = new BinaryBitmap(new HybridBinarizer(luminance));
+      try {
+        const result = reader.decodeWithState(bitmap);
+        return [
+          {
+            rawValue: result.getText(),
+            format: BarcodeFormat[result.getBarcodeFormat()].toLowerCase(),
+          },
+        ];
+      } catch {
+        return [];
+      } finally {
+        reader.reset();
+      }
+    },
+  };
+}
+
+async function createDetector(): Promise<BarcodeDetectorLike | null> {
+  const Detector = getBarcodeDetector();
+  if (Detector) {
+    if (!(await supportedCheck(Detector))) return null;
+    return new Detector({ formats: CODE_FORMATS });
+  }
+  try {
+    return await createZXingDetector();
+  } catch {
+    return null;
+  }
+}
+
+async function getCameraStream(deviceId: string): Promise<MediaStream> {
+  const candidates: MediaTrackConstraints[] = [
+    ...(deviceId && deviceId !== "0"
+      ? [{ deviceId: { exact: deviceId } }]
+      : []),
+    { facingMode: { ideal: "environment" } },
+    {},
+  ];
+  let lastError: unknown;
+  for (const video of candidates) {
+    try {
+      return await navigator.mediaDevices.getUserMedia({ video });
+    } catch (error) {
+      lastError = error;
+    }
+  }
+  throw lastError;
+}
+
 export function ProductScanner({
   onDetected,
   onManualFallback,
@@ -73,20 +160,19 @@ export function ProductScanner({
 
     async function start() {
       setStatus("starting");
-      const detectorCtor = getBarcodeDetector();
-      if (!detectorCtor || !navigator.mediaDevices?.getUserMedia) {
+      if (!navigator.mediaDevices?.getUserMedia) {
         setStatus("unsupported");
         return;
       }
-      const Detector: BarcodeDetectorConstructor = detectorCtor;
-      if (!(await supportedCheck(Detector))) {
+      const created = await createDetector();
+      if (stopped) return;
+      if (!created) {
         setStatus("unsupported");
         return;
       }
+      detector = created;
       try {
-        stream = await navigator.mediaDevices.getUserMedia({
-          video: { deviceId },
-        });
+        stream = await getCameraStream(deviceId);
       } catch {
         setStatus("error");
         return;
@@ -119,7 +205,6 @@ export function ProductScanner({
         /* camera list unavailable */
       }
 
-      detector = new Detector({ formats: CODE_FORMATS });
       setStatus("scanning");
 
       interval = setInterval(async () => {
