@@ -1,10 +1,11 @@
 "use client";
 
-import { deleteProductAction, reprocessProductAction, updateProductAction } from "@/actions/events";
+import { deleteProductAction, printProductsAction, reprocessProductAction, updateProductAction } from "@/actions/events";
 import { InlineEdit } from "@/components/inline-edit";
 import {
   PRODUCT_STATUS_LABEL_KEYS,
   EDITABLE_PRODUCT_STATUSES,
+  PRINTING_QUEUED_STATUSES,
   ProductStatus,
 } from "@/lib/product-status";
 import {
@@ -25,7 +26,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
-import { ArrowLeft, ChevronLeft, ChevronRight, MoreHorizontal, RefreshCw } from "lucide-react";
+import { ArrowLeft, ChevronLeft, ChevronRight, MoreHorizontal, Printer, RefreshCw } from "lucide-react";
 import { useTranslations } from "next-intl";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -77,8 +78,19 @@ export function ProductDetail({
   const [error, setError] = useState<string | null>(null);
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [reprocessing, setReprocessing] = useState(false);
+  const [printing, setPrinting] = useState(false);
 
   const canEdit = canManage && eventActive;
+  const canPrint = canManage && PRINTING_QUEUED_STATUSES.includes(product.status);
+
+  async function handlePrint() {
+    setError(null);
+    setPrinting(true);
+    const res = await printProductsAction({ eventId, productIds: [product.id] });
+    setPrinting(false);
+    if (res?.error) setError(res.error);
+    else router.refresh();
+  }
 
   function save(
     field: "title" | "author" | "price" | "conservationState" | "status",
@@ -150,6 +162,12 @@ export function ProductDetail({
             onError={setError}
           />
         </h1>
+        {canPrint && (
+          <Button size="sm" onClick={handlePrint} disabled={printing}>
+            <Printer />
+            {printing ? t("printingEllipsis") : t("print")}
+          </Button>
+        )}
         {canManage && (
           <DropdownMenu>
             <DropdownMenuTrigger

@@ -355,7 +355,9 @@
     "reprocess": "Reprocess price",
     "reprocessing": "Reprocessing...",
     "previousProduct": "Previous product",
-    "nextProduct": "Next product"
+    "nextProduct": "Next product",
+    "print": "Print",
+    "printingEllipsis": "Printing..."
   },
   "AddProductDrawer": {
     "addProduct": "Add product",
