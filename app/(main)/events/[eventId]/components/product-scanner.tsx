@@ -96,16 +96,20 @@ async function createZXingDetector(): Promise<BarcodeDetectorLike> {
   };
 }
 
-async function createDetector(): Promise<BarcodeDetectorLike | null> {
+async function createDetector(): Promise<BarcodeDetectorLike> {
   const Detector = getBarcodeDetector();
   if (Detector) {
-    if (!(await supportedCheck(Detector))) return null;
+    if (!(await supportedCheck(Detector))) {
+      throw new Error("native-detector-missing-formats");
+    }
     return new Detector({ formats: CODE_FORMATS });
   }
   try {
     return await createZXingDetector();
-  } catch {
-    return null;
+  } catch (error) {
+    throw new Error(
+      `zxing-load-failed: ${error instanceof Error ? error.message : String(error)}`,
+    );
   }
 }
 
@@ -140,6 +144,7 @@ export function ProductScanner({
   const [status, setStatus] = useState<
     "idle" | "starting" | "scanning" | "unsupported" | "error"
   >("idle");
+  const [debugInfo, setDebugInfo] = useState<string | null>(null);
   const [cameras, setCameras] = useState<MediaDeviceInfo[]>([]);
   const [deviceId, setDeviceId] = useState<string>(() =>
     typeof window !== "undefined"
@@ -160,20 +165,31 @@ export function ProductScanner({
 
     async function start() {
       setStatus("starting");
+      setDebugInfo(null);
       if (!navigator.mediaDevices?.getUserMedia) {
+        setDebugInfo(
+          `no-camera-api (secure=${String(window.isSecureContext)})`,
+        );
         setStatus("unsupported");
         return;
       }
-      const created = await createDetector();
+      try {
+        detector = await createDetector();
+      } catch (error) {
+        if (stopped) return;
+        setDebugInfo(error instanceof Error ? error.message : String(error));
+        setStatus("unsupported");
+        return;
+      }
       if (stopped) return;
-      if (!created) {
-        setStatus("unsupported");
-        return;
-      }
-      detector = created;
       try {
         stream = await getCameraStream(deviceId);
-      } catch {
+      } catch (error) {
+        setDebugInfo(
+          error instanceof Error
+            ? `${error.name}: ${error.message}`
+            : String(error),
+        );
         setStatus("error");
         return;
       }
@@ -270,6 +286,11 @@ export function ProductScanner({
                   {t("enterManually")}
                 </Button>
               </>
+            )}
+            {debugInfo && (
+              <p className="max-w-full text-xs break-all text-white/50">
+                {debugInfo}
+              </p>
             )}
           </div>
         )}

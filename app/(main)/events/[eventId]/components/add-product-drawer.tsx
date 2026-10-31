@@ -1,6 +1,7 @@
 "use client";
 
 import { addProductAction } from "@/actions/events";
+import { useAddProductButtonSide } from "@/components/add-product-button-side-toggle";
 import { Button } from "@/components/ui/button";
 import {
   Drawer,
@@ -20,6 +21,7 @@ const CONSERVATION_OPTIONS = [
   { value: "Fair", labelKey: "fair" },
 ] as const;
 import { ProductScanner } from "./product-scanner";
+import { cn } from "@/lib/utils";
 import { Hand, Plus, ScanLine } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
@@ -39,6 +41,7 @@ export function AddProductDrawer({ eventId }: { eventId: string }) {
   const [conservationState, setConservationState] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
+  const buttonSide = useAddProductButtonSide();
 
   function close() {
     setOpen(false);
@@ -96,7 +99,10 @@ export function AddProductDrawer({ eventId }: { eventId: string }) {
     <Drawer open={open} onOpenChange={(o) => (o ? setOpen(true) : close())}>
       <Button
         size="icon-lg"
-        className="fixed bottom-4 left-4 z-30 rounded-full shadow-lg"
+        className={cn(
+          "fixed bottom-4 z-30 size-[46px] rounded-full shadow-lg",
+          buttonSide === "left" ? "left-4" : "right-4",
+        )}
         aria-label={t("addProduct")}
         onClick={() => setOpen(true)}
       >

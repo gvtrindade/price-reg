@@ -1,6 +1,7 @@
 "use client";
 
 import { StatusGuideDialog } from "@/components/status-guide-dialog";
+import { AddProductButtonSideToggle } from "@/components/add-product-button-side-toggle";
 import { Button } from "@/components/ui/button";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { authClient } from "@/lib/auth-client";
@@ -125,6 +126,7 @@ export default function Sidebar({ children }: { children: React.ReactNode }) {
                 <span>{t("settings")}</span>
               </Button>
               <ThemeToggle />
+              <AddProductButtonSideToggle />
               <Button
                 variant="ghost"
                 className="justify-start gap-3"

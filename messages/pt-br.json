@@ -203,7 +203,9 @@
     "lightMode": "Modo claro",
     "collapse": "Recolher menu lateral",
     "expand": "Expandir menu lateral",
-    "statusGuide": "Guia de status"
+    "statusGuide": "Guia de status",
+    "moveAddButtonRight": "Mover botão de adicionar para a direita",
+    "moveAddButtonLeft": "Mover botão de adicionar para a esquerda"
   },
   "StatusGuide": {
     "title": "Status dos produtos",

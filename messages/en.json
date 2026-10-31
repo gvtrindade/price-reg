@@ -116,7 +116,9 @@
     "lightMode": "Light mode",
     "collapse": "Collapse sidebar",
     "expand": "Expand sidebar",
-    "statusGuide": "Status guide"
+    "statusGuide": "Status guide",
+    "moveAddButtonRight": "Move add button to the right",
+    "moveAddButtonLeft": "Move add button to the left"
   },
   "StatusGuide": {
     "title": "Product statuses",
