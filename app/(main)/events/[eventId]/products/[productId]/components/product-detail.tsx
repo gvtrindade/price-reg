@@ -1,6 +1,6 @@
 "use client";
 
-import { deleteProductAction, printProductsAction, reprocessProductAction, updateProductAction } from "@/actions/events";
+import { deleteProductAction, duplicateProductAction, printProductsAction, reprocessProductAction, updateProductAction } from "@/actions/events";
 import { InlineEdit } from "@/components/inline-edit";
 import {
   PRODUCT_STATUS_LABEL_KEYS,
@@ -26,7 +26,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
-import { ArrowLeft, ChevronLeft, ChevronRight, MoreHorizontal, Printer, RefreshCw } from "lucide-react";
+import { ArrowLeft, ChevronLeft, ChevronRight, CopyPlus, MoreHorizontal, Printer, RefreshCw } from "lucide-react";
 import { useTranslations } from "next-intl";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -78,6 +78,7 @@ export function ProductDetail({
   const [error, setError] = useState<string | null>(null);
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [reprocessing, setReprocessing] = useState(false);
+  const [duplicating, setDuplicating] = useState(false);
   const [printing, setPrinting] = useState(false);
 
   const canEdit = canManage && eventActive;
@@ -194,6 +195,23 @@ export function ProductDetail({
                   {reprocessing ? t("reprocessing") : t("reprocess")}
                 </DropdownMenuItem>
               )}
+              <DropdownMenuItem
+                disabled={duplicating}
+                onClick={async () => {
+                  setError(null);
+                  setDuplicating(true);
+                  const res = await duplicateProductAction({ productId: product.id });
+                  setDuplicating(false);
+                  if (res?.error) setError(res.error);
+                  else if (res?.id) {
+                    router.push(`/events/${eventId}/products/${res.id}`);
+                    router.refresh();
+                  }
+                }}
+              >
+                <CopyPlus />
+                {duplicating ? t("duplicating") : t("duplicate")}
+              </DropdownMenuItem>
               <DropdownMenuItem onClick={() => setDeleteOpen(true)}>
                 {t("deleteProduct")}
               </DropdownMenuItem>

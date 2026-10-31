@@ -517,6 +517,47 @@ export async function deleteProductAction(data: { productId: string }) {
   });
 }
 
+export async function duplicateProductAction(data: { productId: string }) {
+  return Sentry.withServerActionInstrumentation("duplicateProductAction", async () => {
+    const t = await getTranslations("Errors");
+
+    const product = await prisma.product.findUnique({
+      where: { id: data.productId },
+      select: {
+        title: true,
+        author: true,
+        code: true,
+        conservationState: true,
+        price: true,
+        priced: true,
+        event: { select: { id: true, status: true } },
+      },
+    });
+    if (!product || product.event.status !== "ACTIVE") return { error: t("productNotFound") };
+    const session = await requireEventManager(product.event.id);
+    if (!session) return { error: t("notManager") };
+
+    // The copy gets no external id: the printer service reserves a fresh one at
+    // print time. A priced copy is therefore "processed" (printable) right away;
+    // an unpriced one waits for manual pricing as "added".
+    const duplicate = await prisma.product.create({
+      data: {
+        title: product.title,
+        author: product.author,
+        code: product.code,
+        conservationState: product.conservationState,
+        price: product.price,
+        priced: product.priced,
+        status: product.priced ? ProductStatus.PROCESSED : ProductStatus.ADDED,
+        eventId: product.event.id,
+        addedById: session.user.id,
+      },
+      select: { id: true },
+    });
+    return { error: null, id: duplicate.id };
+  });
+}
+
 export async function upsertPrintTemplateAction(data: {
   eventId: string;
   blob: Uint8Array;

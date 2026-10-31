@@ -356,6 +356,8 @@
     "notPriced": "Not priced",
     "reprocess": "Reprocess price",
     "reprocessing": "Reprocessing...",
+    "duplicate": "Duplicate",
+    "duplicating": "Duplicating...",
     "previousProduct": "Previous product",
     "nextProduct": "Next product",
     "print": "Print",
