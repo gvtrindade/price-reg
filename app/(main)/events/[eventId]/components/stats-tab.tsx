@@ -123,8 +123,6 @@ export function StatsTab({ products }: { products: ProductRow[] }) {
     0,
   );
 
-  const labelEvery = Math.max(1, Math.ceil(buckets.length / 10));
-
   const rankByCount = useMemo(() => {
     const rows = new Map<string, { id: string; name: string; count: number }>();
     for (const product of products) {
@@ -194,17 +192,15 @@ export function StatsTab({ products }: { products: ProductRow[] }) {
             </div>
             <div className="min-w-0 flex-1 overflow-x-auto">
               <div className="flex min-w-full gap-1">
-                {buckets.map((bucket, index) => {
+                {buckets.map((bucket) => {
                   const height =
                     bucket.count === 0
                       ? 0
                       : Math.max(2, (bucket.count / maxCount) * 100);
-                  const showLabel =
-                    buckets.length <= 14 || index % labelEvery === 0;
                   return (
                     <div
                       key={bucket.key}
-                      className="min-w-[8px] flex-1"
+                      className="min-w-[28px] flex-1"
                       title={t("dayTooltip", {
                         date: fullDateFormatter.format(bucket.date),
                         count: bucket.count,
@@ -217,7 +213,10 @@ export function StatsTab({ products }: { products: ProductRow[] }) {
                         />
                       </div>
                       <div className="mt-1 h-4 truncate text-center text-[10px] text-muted-foreground">
-                        {showLabel ? dateFormatter.format(bucket.date) : ""}
+                        {dateFormatter.format(bucket.date)}
+                      </div>
+                      <div className="text-center text-[10px] font-medium tabular-nums">
+                        {bucket.count}
                       </div>
                     </div>
                   );
