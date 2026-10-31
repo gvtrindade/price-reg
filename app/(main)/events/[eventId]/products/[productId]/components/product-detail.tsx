@@ -245,6 +245,8 @@ export function ProductDetail({
             editable={canEdit}
             label={t("price")}
             inputMode="decimal"
+            min={2}
+            step="0.01"
             onSave={save("price")}
             onError={setError}
           />

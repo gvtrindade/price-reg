@@ -147,7 +147,7 @@ function parseProductData(data: {
   }
   if (data.price !== undefined) {
     const price = Number(data.price.replace(",", "."));
-    if (!Number.isFinite(price) || price < 0)
+    if (!Number.isFinite(price) || price < 0 || (price > 0 && price < 2))
       return { error: "invalidPrice" as ProductFieldError };
     out.price = Math.round(price * 100) / 100;
     out.priced = out.price > 0;
@@ -170,6 +170,7 @@ export async function addProductAction(data: {
   title?: string;
   author?: string;
   code?: string;
+  price?: string;
   conservationState: string;
 }) {
   return Sentry.withServerActionInstrumentation("addProductAction", async () => {
@@ -180,7 +181,15 @@ export async function addProductAction(data: {
     const title = data.title?.trim() || null;
     const author = data.author?.trim() || null;
     const code = data.code?.trim() || null;
+    const priceInput = data.price?.trim();
     const conservationState = data.conservationState.trim();
+
+    let price: number | null = null;
+    if (priceInput) {
+      const value = Number(priceInput.replace(",", "."));
+      if (!Number.isFinite(value) || value < 2) return { error: t("invalidPrice") };
+      price = Math.round(value * 100) / 100;
+    }
 
     if (!code && !title) return { error: t("productNameOrCodeRequired") };
     if (title && !author) return { error: t("invalidAuthor") };
@@ -248,7 +257,12 @@ export async function addProductAction(data: {
           author: discogsAuthor,
           code,
           conservationState,
-          status: discogsStatus,
+          status:
+            price !== null && discogsTitle
+              ? ProductStatus.PROCESSED
+              : discogsStatus,
+          price,
+          priced: price !== null,
           addedById: session.user.id,
         },
       });
@@ -298,12 +312,20 @@ export async function addProductAction(data: {
         author,
         code,
         conservationState,
-        status: "added",
+        status:
+          price !== null && title
+            ? ProductStatus.PROCESSED
+            : ProductStatus.ADDED,
+        price,
+        priced: price !== null,
         addedById: session.user.id,
       },
       // The webhook may have created the row first, without a user, so always
       // attribute it to the volunteer performing the lookup.
-      update: { addedById: session.user.id },
+      update: {
+        addedById: session.user.id,
+        ...(price !== null ? { price, priced: true } : {}),
+      },
     });
     return { error: null, id: productId };
   });

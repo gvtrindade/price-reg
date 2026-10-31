@@ -9,6 +9,7 @@ import { AddProductDrawer } from "./add-product-drawer";
 import { EventMembersDialog, type EventMemberUser } from "./event-members-dialog";
 import { ProcessingTab } from "./processing-tab";
 import { PrintingTab } from "./printing-tab";
+import { StatsTab } from "./stats-tab";
 import { TotalsTab } from "./totals-tab";
 import { InlineEdit } from "@/components/inline-edit";
 import {
@@ -255,6 +256,9 @@ export function EventDetail({
           <Tabs.Tab value="totals" className={tabClass}>
             {t("totalsTab")}
           </Tabs.Tab>
+          <Tabs.Tab value="stats" className={tabClass}>
+            {t("statsTab")}
+          </Tabs.Tab>
         </Tabs.List>
 
         <Tabs.Panel value="processing">
@@ -288,6 +292,10 @@ export function EventDetail({
             t={t}
             tState={tState}
           />
+        </Tabs.Panel>
+
+        <Tabs.Panel value="stats">
+          <StatsTab products={event.products} />
         </Tabs.Panel>
       </Tabs.Root>
 

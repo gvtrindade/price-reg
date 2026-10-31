@@ -38,6 +38,7 @@ export function AddProductDrawer({ eventId }: { eventId: string }) {
   const [title, setTitle] = useState("");
   const [author, setAuthor] = useState("");
   const [code, setCode] = useState("");
+  const [price, setPrice] = useState("");
   const [conservationState, setConservationState] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
@@ -49,6 +50,7 @@ export function AddProductDrawer({ eventId }: { eventId: string }) {
     setTitle("");
     setAuthor("");
     setCode("");
+    setPrice("");
     setConservationState("");
     setError(null);
     setPending(false);
@@ -81,6 +83,7 @@ export function AddProductDrawer({ eventId }: { eventId: string }) {
       title,
       author,
       code,
+      price,
       conservationState,
     });
     setPending(false);
@@ -213,6 +216,19 @@ export function AddProductDrawer({ eventId }: { eventId: string }) {
                   onChange={(e) => setCode(e.target.value)}
                   placeholder={t("codePlaceholder")}
                   inputMode="numeric"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="product-price">{t("priceField")}</Label>
+                <Input
+                  id="product-price"
+                  type="number"
+                  min={2}
+                  step="0.01"
+                  inputMode="decimal"
+                  value={price}
+                  onChange={(e) => setPrice(e.target.value)}
+                  placeholder={t("pricePlaceholder")}
                 />
               </div>
               <div className="space-y-2">

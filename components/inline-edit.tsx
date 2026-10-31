@@ -11,6 +11,8 @@ interface InlineEditProps {
   className?: string;
   inputClassName?: string;
   inputMode?: "text" | "decimal";
+  min?: number | string;
+  step?: number | string;
   label?: string;
   placeholder?: string;
   error?: string | null;
@@ -25,6 +27,8 @@ export function InlineEdit({
   className,
   inputClassName,
   inputMode = "text",
+  min,
+  step,
   label,
   placeholder,
   error,
@@ -115,6 +119,8 @@ export function InlineEdit({
             aria-label={label}
             value={draft}
             inputMode={inputMode}
+            min={min}
+            step={step}
             disabled={saving}
             onChange={(e) => setDraft(e.target.value)}
             onBlur={save}
