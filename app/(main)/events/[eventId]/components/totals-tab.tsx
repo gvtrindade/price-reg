@@ -1,7 +1,8 @@
 "use client";
 
 import { ProductRow, EventData, CONSERVATION_LABELS } from "./event-detail";
-import { Input } from "@/components/ui/input";
+import { SearchInput } from "@/components/ui/search-input";
+import { normalizeForSearch } from "@/lib/utils";
 import Link from "next/link";
 import { useState } from "react";
 
@@ -18,21 +19,22 @@ export function TotalsTab({
 }) {
   const [search, setSearch] = useState("");
 
-  const query = search.trim().toLowerCase();
+  const query = normalizeForSearch(search.trim());
   const totalsProducts = query
     ? products.filter(
         (product) =>
-          (product.title ?? "").toLowerCase().includes(query) ||
-          (product.author ?? "").toLowerCase().includes(query) ||
-          (product.code ?? "").toLowerCase().includes(query),
+          normalizeForSearch(product.title ?? "").includes(query) ||
+          normalizeForSearch(product.author ?? "").includes(query) ||
+          normalizeForSearch(product.code ?? "").includes(query),
       )
     : products;
 
   return (
     <div className="space-y-3">
-      <Input
+      <SearchInput
         value={search}
-        onChange={(e) => setSearch(e.target.value)}
+        onValueChange={setSearch}
+        clearLabel={t("clearSearch")}
         placeholder={t("searchPlaceholder")}
         aria-label={t("searchPlaceholder")}
       />

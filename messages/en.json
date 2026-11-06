@@ -307,6 +307,7 @@
     "noRecentProducts": "You have not registered any products in the last 2 hours.",
     "noOtherProducts": "No other products are being processed.",
     "searchPlaceholder": "Search by name, author or code",
+    "clearSearch": "Clear search",
     "noProducts": "No products in this event yet.",
     "noResults": "No products match your search.",
     "openProduct": "Open product",

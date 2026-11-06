@@ -18,9 +18,9 @@ import {
   DrawerDescription,
   DrawerFooter,
 } from "@/components/ui/drawer";
-import { Input } from "@/components/ui/input";
+import { SearchInput } from "@/components/ui/search-input";
 import { ProductStatus } from "@/lib/product-status";
-import { cn } from "@/lib/utils";
+import { cn, normalizeForSearch } from "@/lib/utils";
 import { Ellipsis, Printer } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -62,6 +62,9 @@ function QueuedProductListItem({
       <p className="min-w-0 flex-1 truncate font-medium">
         {product.title ?? product.code ?? "—"}
       </p>
+      <span className="shrink-0 text-sm tabular-nums">
+        {product.price ?? "—"}
+      </span>
     </li>
   );
 }
@@ -83,6 +86,9 @@ function PrintProductListItem({
           {product.title ?? product.code ?? "—"}
         </p>
       </Link>
+      <span className="shrink-0 text-sm tabular-nums">
+        {product.price ?? "—"}
+      </span>
     </li>
   );
 }
@@ -111,6 +117,9 @@ function PrintProductListItemWithMenu({
           {product.title ?? product.code ?? "—"}
         </p>
       </Link>
+      <span className="mr-2 shrink-0 text-sm tabular-nums">
+        {product.price ?? "—"}
+      </span>
       <div className="relative z-10 flex shrink-0 items-center">
         <DropdownMenu open={menuOpen} onOpenChange={setMenuOpen}>
           <DropdownMenuTrigger
@@ -236,12 +245,12 @@ export function PrintingTab({
     (product) => !isRecent(product),
   );
 
-  const query = search.trim().toLowerCase();
+  const query = normalizeForSearch(search.trim());
   const filteredQueuedProducts = query
     ? otherQueuedProducts.filter(
         (product) =>
-          (product.title ?? "").toLowerCase().includes(query) ||
-          (product.code ?? "").toLowerCase().includes(query),
+          normalizeForSearch(product.title ?? "").includes(query) ||
+          normalizeForSearch(product.code ?? "").includes(query),
       )
     : otherQueuedProducts;
 
@@ -313,9 +322,10 @@ export function PrintingTab({
 
       <section className="space-y-3">
         <h2 className="text-xl font-semibold">{t("queuedToPrint")}</h2>
-        <Input
+        <SearchInput
           value={search}
-          onChange={(e) => setSearch(e.target.value)}
+          onValueChange={setSearch}
+          clearLabel={t("clearSearch")}
           placeholder={t("searchQueuePlaceholder")}
           aria-label={t("searchQueuePlaceholder")}
         />

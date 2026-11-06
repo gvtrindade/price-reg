@@ -307,6 +307,7 @@
     "noRecentProducts": "Você não registrou nenhum produto nas últimas 2 horas.",
     "noOtherProducts": "Nenhum outro produto está em processamento.",
     "searchPlaceholder": "Buscar por nome, autor ou código",
+    "clearSearch": "Limpar busca",
     "noProducts": "Nenhum produto neste evento ainda.",
     "noResults": "Nenhum produto corresponde à sua busca.",
     "openProduct": "Abrir produto",
