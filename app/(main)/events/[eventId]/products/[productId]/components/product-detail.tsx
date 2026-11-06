@@ -6,6 +6,7 @@ import {
   PRODUCT_STATUS_LABEL_KEYS,
   EDITABLE_PRODUCT_STATUSES,
   PRINTING_QUEUED_STATUSES,
+  PRINTING_DONE_STATUSES,
   ProductStatus,
 } from "@/lib/product-status";
 import {
@@ -83,6 +84,7 @@ export function ProductDetail({
 
   const canEdit = canManage && eventActive;
   const canPrint = canManage && PRINTING_QUEUED_STATUSES.includes(product.status);
+  const canReprint = canManage && PRINTING_DONE_STATUSES.includes(product.status);
 
   async function handlePrint() {
     setError(null);
@@ -179,6 +181,12 @@ export function ProductDetail({
               <MoreHorizontal />
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
+              {canReprint && (
+                <DropdownMenuItem disabled={printing} onClick={handlePrint}>
+                  <Printer />
+                  {printing ? t("printingEllipsis") : t("print")}
+                </DropdownMenuItem>
+              )}
               {canReprocess && (
                 <DropdownMenuItem
                   disabled={reprocessing}

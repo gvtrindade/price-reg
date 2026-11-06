@@ -280,6 +280,7 @@ export function EventDetail({
             queuedProducts={queuedProducts}
             printingProducts={printingProducts}
             printedProducts={printedProducts}
+            currentUserId={currentUserId}
             canManage={canManageProducts}
             t={t}
           />

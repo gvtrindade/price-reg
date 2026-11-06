@@ -23,7 +23,8 @@ export function TotalsTab({
     ? products.filter(
         (product) =>
           (product.title ?? "").toLowerCase().includes(query) ||
-          (product.author ?? "").toLowerCase().includes(query),
+          (product.author ?? "").toLowerCase().includes(query) ||
+          (product.code ?? "").toLowerCase().includes(query),
       )
     : products;
 

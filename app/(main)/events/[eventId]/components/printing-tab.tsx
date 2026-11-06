@@ -22,7 +22,9 @@ import { ProductStatus } from "@/lib/product-status";
 import { Ellipsis, Printer } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
+
+const RECENT_WINDOW_MS = 2 * 60 * 60 * 1000;
 
 function QueuedProductListItem({
   product,
@@ -197,6 +199,7 @@ export function PrintingTab({
   queuedProducts,
   printingProducts,
   printedProducts,
+  currentUserId,
   canManage,
   t,
 }: {
@@ -204,6 +207,7 @@ export function PrintingTab({
   queuedProducts: ProductRow[];
   printingProducts: ProductRow[];
   printedProducts: ProductRow[];
+  currentUserId: string;
   canManage: boolean;
   t: (key: string, values?: Record<string, string | number>) => string;
 }) {
@@ -213,14 +217,30 @@ export function PrintingTab({
   const [selectedProductIds, setSelectedProductIds] = useState<Set<string>>(new Set());
   const [isPrinting, setIsPrinting] = useState(false);
 
+  // Keep the two-hour window moving while the page stays open.
+  const [now, setNow] = useState(() => Date.now());
+  useEffect(() => {
+    const interval = setInterval(() => setNow(Date.now()), 60_000);
+    return () => clearInterval(interval);
+  }, []);
+
+  const isRecent = (product: ProductRow) =>
+    product.addedById === currentUserId &&
+    now - new Date(product.createdAt).getTime() < RECENT_WINDOW_MS;
+
+  const recentQueuedProducts = queuedProducts.filter(isRecent);
+  const otherQueuedProducts = queuedProducts.filter(
+    (product) => !isRecent(product),
+  );
+
   const query = search.trim().toLowerCase();
   const filteredQueuedProducts = query
-    ? queuedProducts.filter(
+    ? otherQueuedProducts.filter(
         (product) =>
           (product.title ?? "").toLowerCase().includes(query) ||
           (product.code ?? "").toLowerCase().includes(query),
       )
-    : queuedProducts;
+    : otherQueuedProducts;
 
   function refresh() {
     router.refresh();
@@ -261,6 +281,33 @@ export function PrintingTab({
   return (
     <div className="space-y-6">
       {error && <p className="text-sm text-destructive">{error}</p>}
+      {queuedProducts.length > 0 && (
+        <section className="space-y-3">
+          <div className="flex items-center justify-between gap-4">
+            <h2 className="text-xl font-semibold">{t("recentProducts")}</h2>
+            <span className="text-sm text-muted-foreground">
+              {t("productCount", { count: recentQueuedProducts.length })}
+            </span>
+          </div>
+          {recentQueuedProducts.length === 0 ? (
+            <p className="text-sm text-muted-foreground">
+              {t("noRecentProducts")}
+            </p>
+          ) : (
+            <ul className="divide-y rounded-lg border">
+              {recentQueuedProducts.map((product) => (
+                <QueuedProductListItem
+                  key={product.id}
+                  product={product}
+                  selected={selectedProductIds.has(product.id)}
+                  onToggle={toggleProductSelection}
+                />
+              ))}
+            </ul>
+          )}
+        </section>
+      )}
+
       <section className="space-y-3">
         <div className="flex items-center justify-between gap-4">
           <h2 className="text-xl font-semibold">{t("queuedToPrint")}</h2>
@@ -284,7 +331,9 @@ export function PrintingTab({
         {queuedProducts.length === 0 ? (
           <p className="text-sm text-muted-foreground">{t("noProducts")}</p>
         ) : filteredQueuedProducts.length === 0 ? (
-          <p className="text-sm text-muted-foreground">{t("noResults")}</p>
+          <p className="text-sm text-muted-foreground">
+            {query ? t("noResults") : t("noOtherQueuedProducts")}
+          </p>
         ) : (
           <ul className="divide-y rounded-lg border">
             {filteredQueuedProducts.map((product) => (
