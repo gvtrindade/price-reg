@@ -98,6 +98,7 @@ export function EventDetail({
   const [error, setError] = useState<string | null>(null);
   const [cancelDialogOpen, setCancelDialogOpen] = useState(false);
   const [membersDialogOpen, setMembersDialogOpen] = useState(false);
+  const [activeTab, setActiveTab] = useState("processing");
 
   const isActive = event.status === "ACTIVE";
 
@@ -245,7 +246,11 @@ export function EventDetail({
 
       {error && <p className="text-sm text-destructive">{error}</p>}
 
-      <Tabs.Root defaultValue="processing" className="flex flex-col gap-4">
+      <Tabs.Root
+        value={activeTab}
+        onValueChange={setActiveTab}
+        className="flex flex-col gap-4"
+      >
         <Tabs.List className="flex gap-1 border-b">
           <Tabs.Tab value="processing" className={tabClass}>
             {t("processingTab")}
@@ -300,7 +305,9 @@ export function EventDetail({
         </Tabs.Panel>
       </Tabs.Root>
 
-      {isActive && <AddProductDrawer eventId={event.id} />}
+      {isActive && activeTab !== "printing" && (
+        <AddProductDrawer eventId={event.id} />
+      )}
     </main>
   );
 }

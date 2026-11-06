@@ -2,6 +2,7 @@
 
 import { ProductRow, EventData } from "./event-detail";
 import { printProductsAction, updateProductAction } from "@/actions/events";
+import { useAddProductButtonSide } from "@/components/add-product-button-side-toggle";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -19,6 +20,7 @@ import {
 } from "@/components/ui/drawer";
 import { Input } from "@/components/ui/input";
 import { ProductStatus } from "@/lib/product-status";
+import { cn } from "@/lib/utils";
 import { Ellipsis, Printer } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -216,6 +218,7 @@ export function PrintingTab({
   const [search, setSearch] = useState("");
   const [selectedProductIds, setSelectedProductIds] = useState<Set<string>>(new Set());
   const [isPrinting, setIsPrinting] = useState(false);
+  const buttonSide = useAddProductButtonSide();
 
   // Keep the two-hour window moving while the page stays open.
   const [now, setNow] = useState(() => Date.now());
@@ -309,19 +312,7 @@ export function PrintingTab({
       )}
 
       <section className="space-y-3">
-        <div className="flex items-center justify-between gap-4">
-          <h2 className="text-xl font-semibold">{t("queuedToPrint")}</h2>
-          {canManage && (
-            <Button
-              size="sm"
-              onClick={handlePrint}
-              disabled={selectedProductIds.size === 0 || isPrinting}
-            >
-              <Printer />
-              {isPrinting ? t("printingEllipsis") : t("print")}
-            </Button>
-          )}
-        </div>
+        <h2 className="text-xl font-semibold">{t("queuedToPrint")}</h2>
         <Input
           value={search}
           onChange={(e) => setSearch(e.target.value)}
@@ -382,6 +373,21 @@ export function PrintingTab({
           />
         )}
       </section>
+
+      {canManage && (
+        <Button
+          size="icon-lg"
+          className={cn(
+            "fixed bottom-4 z-30 size-[46px] rounded-full shadow-lg",
+            buttonSide === "left" ? "left-4" : "right-4",
+          )}
+          aria-label={t("print")}
+          onClick={handlePrint}
+          disabled={selectedProductIds.size === 0 || isPrinting}
+        >
+          <Printer />
+        </Button>
+      )}
     </div>
   );
 }
