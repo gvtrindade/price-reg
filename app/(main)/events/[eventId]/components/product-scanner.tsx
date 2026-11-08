@@ -77,7 +77,7 @@ async function createZXingDetector(): Promise<BarcodeDetectorLike> {
       canvas.width = width;
       canvas.height = height;
       context.drawImage(source, 0, 0, width, height);
-      const luminance = new HTMLCanvasElementLuminanceSource(canvas, true);
+      const luminance = new HTMLCanvasElementLuminanceSource(canvas);
       const bitmap = new BinaryBitmap(new HybridBinarizer(luminance));
       try {
         const result = reader.decodeWithState(bitmap);
@@ -124,7 +124,15 @@ async function getCameraStream(deviceId: string): Promise<MediaStream> {
   let lastError: unknown;
   for (const video of candidates) {
     try {
-      return await navigator.mediaDevices.getUserMedia({ video });
+      const stream = await navigator.mediaDevices.getUserMedia({ video });
+      try {
+        await stream.getVideoTracks()[0]?.applyConstraints({
+          advanced: [{ focusMode: "continuous" } as MediaTrackConstraintSet],
+        });
+      } catch {
+        /* constraint unsupported */
+      }
+      return stream;
     } catch (error) {
       lastError = error;
     }
