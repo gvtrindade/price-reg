@@ -24,9 +24,56 @@ import { cn, normalizeForSearch } from "@/lib/utils";
 import { Ellipsis, Printer } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useCallback, useEffect, useState } from "react";
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
+  useSyncExternalStore,
+} from "react";
 
 const RECENT_WINDOW_MS = 2 * 60 * 60 * 1000;
+
+// The checked products are kept in sessionStorage so the selection survives
+// page reloads. Follows the same useSyncExternalStore pattern as
+// add-product-button-side-toggle.
+const SELECTION_CHANGE_EVENT = "printingtabselectionchange";
+const EMPTY_SELECTION: string[] = [];
+
+// Cache parsed selections so the snapshot returns a stable reference per key.
+const selectionCache = new Map<string, { raw: string | null; ids: string[] }>();
+
+function subscribeToSelection(callback: () => void) {
+  window.addEventListener(SELECTION_CHANGE_EVENT, callback);
+  window.addEventListener("storage", callback);
+  return () => {
+    window.removeEventListener(SELECTION_CHANGE_EVENT, callback);
+    window.removeEventListener("storage", callback);
+  };
+}
+
+function getSelectionSnapshot(storageKey: string): string[] {
+  const raw = sessionStorage.getItem(storageKey);
+  const cached = selectionCache.get(storageKey);
+  if (cached && cached.raw === raw) return cached.ids;
+  let ids = EMPTY_SELECTION;
+  try {
+    if (raw) ids = JSON.parse(raw) as string[];
+  } catch {
+    sessionStorage.removeItem(storageKey);
+  }
+  selectionCache.set(storageKey, { raw, ids });
+  return ids;
+}
+
+function getServerSelectionSnapshot(): string[] {
+  return EMPTY_SELECTION;
+}
+
+function setStoredSelection(storageKey: string, ids: Set<string>) {
+  sessionStorage.setItem(storageKey, JSON.stringify(Array.from(ids)));
+  window.dispatchEvent(new Event(SELECTION_CHANGE_EVENT));
+}
 
 function QueuedProductListItem({
   product,
@@ -225,9 +272,15 @@ export function PrintingTab({
   const router = useRouter();
   const [error, setError] = useState<string | null>(null);
   const [search, setSearch] = useState("");
-  const [selectedProductIds, setSelectedProductIds] = useState<Set<string>>(new Set());
   const [isPrinting, setIsPrinting] = useState(false);
   const buttonSide = useAddProductButtonSide();
+  const selectionStorageKey = `printing-tab-selection:${event.id}`;
+  const selectedIds = useSyncExternalStore(
+    subscribeToSelection,
+    () => getSelectionSnapshot(selectionStorageKey),
+    getServerSelectionSnapshot,
+  );
+  const selectedProductIds = useMemo(() => new Set(selectedIds), [selectedIds]);
 
   // Keep the two-hour window moving while the page stays open.
   const [now, setNow] = useState(() => Date.now());
@@ -258,14 +311,15 @@ export function PrintingTab({
     router.refresh();
   }
 
-  const toggleProductSelection = useCallback((productId: string) => {
-    setSelectedProductIds((prev) => {
-      const next = new Set(prev);
+  const toggleProductSelection = useCallback(
+    (productId: string) => {
+      const next = new Set(getSelectionSnapshot(selectionStorageKey));
       if (next.has(productId)) next.delete(productId);
       else next.add(productId);
-      return next;
-    });
-  }, []);
+      setStoredSelection(selectionStorageKey, next);
+    },
+    [selectionStorageKey],
+  );
 
   async function handlePrint() {
     if (selectedProductIds.size === 0) return;
@@ -277,7 +331,7 @@ export function PrintingTab({
     });
     if (res?.error) setError(res.error);
     else {
-      setSelectedProductIds(new Set());
+      setStoredSelection(selectionStorageKey, new Set());
       refresh();
     }
     setIsPrinting(false);
