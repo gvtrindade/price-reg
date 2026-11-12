@@ -50,6 +50,7 @@ export async function POST(request: NextRequest) {
   const { searchParams } = request.nextUrl;
   const jobId = searchParams.get("jobId");
   const eventId = searchParams.get("eventId");
+  const userId = searchParams.get("userId");
   const token = searchParams.get("token");
 
   if (!jobId || !eventId) {
@@ -58,7 +59,7 @@ export async function POST(request: NextRequest) {
       { status: 400 },
     );
   }
-  if (!verifyPrintResultWebhookToken(jobId, eventId, token)) {
+  if (!verifyPrintResultWebhookToken(jobId, eventId, userId, token)) {
     return NextResponse.json({ error: "invalid token" }, { status: 401 });
   }
 
@@ -106,11 +107,24 @@ export async function POST(request: NextRequest) {
   // errors for other products.
   const newStatus = "printed";
 
+  // Attribute the print to the user who started the job. The token covers the
+  // user id, but the user may have been deleted while the job was in flight.
+  const printedBy = userId
+    ? await prisma.user.findUnique({
+        where: { id: userId },
+        select: { id: true },
+      })
+    : null;
+
   let count = 0;
   if (productIds.length > 0) {
     ({ count } = await prisma.product.updateMany({
       where: { id: { in: productIds }, eventId },
-      data: { status: newStatus },
+      data: {
+        status: newStatus,
+        printedAt: new Date(),
+        printedById: printedBy?.id ?? null,
+      },
     }));
   }
 

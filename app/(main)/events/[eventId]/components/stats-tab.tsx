@@ -42,7 +42,8 @@ function dayKey(date: Date) {
 interface DayBucket {
   key: number;
   date: Date;
-  count: number;
+  registrations: number;
+  printed: number;
 }
 
 export function StatsTab({ products }: { products: ProductRow[] }) {
@@ -86,21 +87,29 @@ export function StatsTab({ products }: { products: ProductRow[] }) {
     else if (period === "30d") start = addDays(today, -29);
     else if (period === "90d") start = addDays(today, -89);
     else if (products.length > 0) {
-      const earliest = products.reduce(
-        (min, product) =>
-          Math.min(min, new Date(product.createdAt).getTime()),
-        Number.POSITIVE_INFINITY,
-      );
+      const earliest = products.reduce((min, product) => {
+        const times = [new Date(product.createdAt).getTime()];
+        if (product.printedAt) times.push(new Date(product.printedAt).getTime());
+        return Math.min(min, ...times);
+      }, Number.POSITIVE_INFINITY);
       start = startOfDay(new Date(earliest));
     }
 
-    const counts = new Map<number, number>();
+    const registrationsByDay = new Map<number, number>();
+    const printedByDay = new Map<number, number>();
     for (const product of products) {
       const created = new Date(product.createdAt);
-      if (created < start) continue;
-      if (created > addDays(today, 1)) continue;
-      const key = dayKey(created);
-      counts.set(key, (counts.get(key) ?? 0) + 1);
+      if (created >= start && created <= addDays(today, 1)) {
+        const key = dayKey(created);
+        registrationsByDay.set(key, (registrationsByDay.get(key) ?? 0) + 1);
+      }
+      if (product.printedAt) {
+        const printed = new Date(product.printedAt);
+        if (printed >= start && printed <= addDays(today, 1)) {
+          const key = dayKey(printed);
+          printedByDay.set(key, (printedByDay.get(key) ?? 0) + 1);
+        }
+      }
     }
 
     const result: DayBucket[] = [];
@@ -110,18 +119,25 @@ export function StatsTab({ products }: { products: ProductRow[] }) {
       date = addDays(date, 1)
     ) {
       const key = dayKey(date);
-      const count = counts.get(key) ?? 0;
-      // Only days that actually had registrations are charted.
-      if (count > 0) result.push({ key, date: new Date(date), count });
+      const registrations = registrationsByDay.get(key) ?? 0;
+      const printed = printedByDay.get(key) ?? 0;
+      // Only days with registrations or prints are charted.
+      if (registrations > 0 || printed > 0) {
+        result.push({ key, date: new Date(date), registrations, printed });
+      }
     }
     return result;
   }, [period, products]);
 
-  const maxCount = Math.max(1, ...buckets.map((bucket) => bucket.count));
+  const maxCount = Math.max(
+    1,
+    ...buckets.map((bucket) => Math.max(bucket.registrations, bucket.printed)),
+  );
   const totalRegistrations = buckets.reduce(
-    (sum, bucket) => sum + bucket.count,
+    (sum, bucket) => sum + bucket.registrations,
     0,
   );
+  const totalPrinted = buckets.reduce((sum, bucket) => sum + bucket.printed, 0);
 
   const rankByCount = useMemo(() => {
     const rows = new Map<string, { id: string; name: string; count: number }>();
@@ -156,14 +172,30 @@ export function StatsTab({ products }: { products: ProductRow[] }) {
     );
   }, [products, t]);
 
+  const rankByPrinted = useMemo(() => {
+    const rows = new Map<string, { id: string; name: string; count: number }>();
+    for (const product of products) {
+      if (!product.printedById) continue;
+      const current = rows.get(product.printedById);
+      rows.set(product.printedById, {
+        id: product.printedById,
+        name: product.printedByName ?? t("unknownVolunteer"),
+        count: (current?.count ?? 0) + 1,
+      });
+    }
+    return [...rows.values()].sort(
+      (a, b) => b.count - a.count || a.name.localeCompare(b.name),
+    );
+  }, [products, t]);
+
   return (
     <div className="space-y-8">
       <section className="space-y-3">
         <div className="flex items-center justify-between gap-4">
           <div>
-            <h2 className="text-xl font-semibold">{t("registrations")}</h2>
+            <h2 className="text-xl font-semibold">{t("activity")}</h2>
             <p className="text-sm text-muted-foreground">
-              {t("registeredProductsPerDay")}
+              {t("activityPerDay")}
             </p>
           </div>
           <DropdownMenu>
@@ -185,6 +217,16 @@ export function StatsTab({ products }: { products: ProductRow[] }) {
         </div>
 
         <div className="rounded-lg border p-4">
+          <div className="mb-3 flex items-center gap-4 text-xs text-muted-foreground">
+            <span className="flex items-center gap-1.5">
+              <span className="size-2.5 rounded-sm bg-primary" />
+              {t("registered")}
+            </span>
+            <span className="flex items-center gap-1.5">
+              <span className="size-2.5 rounded-sm bg-chart-3" />
+              {t("printed")}
+            </span>
+          </div>
           <div className="flex gap-3">
             <div className="flex h-44 flex-col justify-between text-xs tabular-nums text-muted-foreground">
               <span>{maxCount}</span>
@@ -193,30 +235,44 @@ export function StatsTab({ products }: { products: ProductRow[] }) {
             <div className="min-w-0 flex-1 overflow-x-auto">
               <div className="flex min-w-full gap-1">
                 {buckets.map((bucket) => {
-                  const height =
-                    bucket.count === 0
+                  const registrationsHeight =
+                    bucket.registrations === 0
                       ? 0
-                      : Math.max(2, (bucket.count / maxCount) * 100);
+                      : Math.max(
+                          2,
+                          (bucket.registrations / maxCount) * 100,
+                        );
+                  const printedHeight =
+                    bucket.printed === 0
+                      ? 0
+                      : Math.max(2, (bucket.printed / maxCount) * 100);
                   return (
                     <div
                       key={bucket.key}
                       className="min-w-[28px] flex-1"
                       title={t("dayTooltip", {
                         date: fullDateFormatter.format(bucket.date),
-                        count: bucket.count,
+                        registered: bucket.registrations,
+                        printed: bucket.printed,
                       })}
                     >
-                      <div className="flex h-40 items-end">
+                      <div className="flex h-40 items-end gap-0.5">
                         <div
-                          className="w-full rounded-t-sm bg-primary"
-                          style={{ height: `${height}%` }}
+                          className="w-1/2 rounded-t-sm bg-primary"
+                          style={{ height: `${registrationsHeight}%` }}
+                        />
+                        <div
+                          className="w-1/2 rounded-t-sm bg-chart-3"
+                          style={{ height: `${printedHeight}%` }}
                         />
                       </div>
                       <div className="mt-1 h-4 truncate text-center text-[10px] text-muted-foreground">
                         {dateFormatter.format(bucket.date)}
                       </div>
                       <div className="text-center text-[10px] font-medium tabular-nums">
-                        {bucket.count}
+                        {bucket.registrations}
+                        <span className="text-muted-foreground">/</span>
+                        {bucket.printed}
                       </div>
                     </div>
                   );
@@ -224,14 +280,13 @@ export function StatsTab({ products }: { products: ProductRow[] }) {
               </div>
             </div>
           </div>
-          <p className="mt-2 text-right text-sm text-muted-foreground">
-            {t("registrationsInPeriod", { count: totalRegistrations })}
-          </p>
+          <div className="mt-2 space-y-1 text-right text-sm text-muted-foreground">
+            <p>{t("registrationsInPeriod", { count: totalRegistrations })}</p>
+            <p>{t("printedInPeriod", { count: totalPrinted })}</p>
+          </div>
         </div>
         {buckets.length === 0 && (
-          <p className="text-sm text-muted-foreground">
-            {t("noRegistrations")}
-          </p>
+          <p className="text-sm text-muted-foreground">{t("noActivity")}</p>
         )}
       </section>
 
@@ -246,6 +301,19 @@ export function StatsTab({ products }: { products: ProductRow[] }) {
           value: String(row.count),
         }))}
         emptyLabel={t("noVolunteers")}
+      />
+
+      <RankSection
+        title={t("printedByVolunteer")}
+        description={t("printedByVolunteerDescription")}
+        nameHeader={t("volunteer")}
+        valueHeader={t("printedCount")}
+        rows={rankByPrinted.map((row) => ({
+          key: row.id,
+          name: row.name,
+          value: String(row.count),
+        }))}
+        emptyLabel={t("noPrintedTags")}
       />
 
       <RankSection

@@ -54,6 +54,9 @@ export interface ProductRow {
   createdAt: Date;
   addedById: string | null;
   addedByName: string | null;
+  printedAt: Date | null;
+  printedById: string | null;
+  printedByName: string | null;
 }
 
 export interface EventData {

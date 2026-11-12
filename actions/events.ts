@@ -646,7 +646,8 @@ export async function printProductsAction(data: { eventId: string; productIds: s
       },
     });
     if (!event) return { error: t("eventNotFound") };
-    if (!(await requireEventManager(event.id))) return { error: t("notManager") };
+    const session = await requireEventManager(event.id);
+    if (!session) return { error: t("notManager") };
     if (!event.printTemplate) return { error: "noPrintTemplate" };
 
     const serviceUrl = process.env.NEXT_PRINTER_SERVICE_URL;
@@ -658,7 +659,11 @@ export async function printProductsAction(data: { eventId: string; productIds: s
     const callbackUrl = new URL("/api/webhooks/print-result", webhookBase);
     callbackUrl.searchParams.set("jobId", jobId);
     callbackUrl.searchParams.set("eventId", data.eventId);
-    callbackUrl.searchParams.set("token", printResultWebhookToken(jobId, data.eventId));
+    callbackUrl.searchParams.set("userId", session.user.id);
+    callbackUrl.searchParams.set(
+      "token",
+      printResultWebhookToken(jobId, data.eventId, session.user.id),
+    );
 
     const products = event.products.map((product) => ({
       id: product.id,

@@ -119,20 +119,27 @@ function QueuedProductListItem({
 function PrintProductListItem({
   product,
   event,
+  showPrintedBy,
 }: {
   product: ProductRow;
   event: EventData;
+  showPrintedBy: boolean;
 }) {
   return (
     <li className="flex items-center p-4 transition-colors hover:bg-accent/50">
       <Link
         href={`/events/${event.id}/products/${product.id}`}
-        className="block w-full outline-none focus-visible:ring-3 focus-visible:ring-ring/50 rounded-lg -m-2 p-2"
+        className="block min-w-0 flex-1 outline-none focus-visible:ring-3 focus-visible:ring-ring/50 rounded-lg -m-2 p-2"
       >
         <p className="truncate font-medium">
           {product.title ?? product.code ?? "—"}
         </p>
       </Link>
+      {showPrintedBy && product.printedByName && (
+        <span className="ml-3 max-w-32 shrink-0 truncate text-xs text-muted-foreground">
+          {product.printedByName}
+        </span>
+      )}
       <span className="shrink-0 text-sm tabular-nums">
         {product.price ?? "—"}
       </span>
@@ -145,11 +152,13 @@ function PrintProductListItemWithMenu({
   event,
   t,
   onStopPrint,
+  showPrintedBy,
 }: {
   product: ProductRow;
   event: EventData;
   t: (key: string, values?: Record<string, string | number>) => string;
   onStopPrint: (productId: string) => void;
+  showPrintedBy: boolean;
 }) {
   const [menuOpen, setMenuOpen] = useState(false);
   const [drawerOpen, setDrawerOpen] = useState(false);
@@ -164,6 +173,11 @@ function PrintProductListItemWithMenu({
           {product.title ?? product.code ?? "—"}
         </p>
       </Link>
+      {showPrintedBy && product.printedByName && (
+        <span className="ml-3 max-w-32 shrink-0 truncate text-xs text-muted-foreground">
+          {product.printedByName}
+        </span>
+      )}
       <span className="mr-2 shrink-0 text-sm tabular-nums">
         {product.price ?? "—"}
       </span>
@@ -225,12 +239,14 @@ function PrintProductList({
   t,
   onStopPrint,
   showMenu,
+  showPrintedBy = false,
 }: {
   products: ProductRow[];
   event: EventData;
   t: (key: string, values?: Record<string, string | number>) => string;
   onStopPrint: (productId: string) => void;
   showMenu: boolean;
+  showPrintedBy?: boolean;
 }) {
   if (products.length === 0) return null;
   return (
@@ -243,9 +259,15 @@ function PrintProductList({
             event={event}
             t={t}
             onStopPrint={onStopPrint}
+            showPrintedBy={showPrintedBy}
           />
         ) : (
-          <PrintProductListItem key={product.id} product={product} event={event} />
+          <PrintProductListItem
+            key={product.id}
+            product={product}
+            event={event}
+            showPrintedBy={showPrintedBy}
+          />
         )
       )}
     </ul>
@@ -434,6 +456,7 @@ export function PrintingTab({
             t={t}
             onStopPrint={handleStopPrint}
             showMenu={canManage}
+            showPrintedBy
           />
         )}
       </section>

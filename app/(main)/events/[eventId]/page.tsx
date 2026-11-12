@@ -33,6 +33,9 @@ export default async function EventDetailPage({
           createdAt: true,
           addedById: true,
           addedBy: { select: { name: true } },
+          printedAt: true,
+          printedById: true,
+          printedBy: { select: { name: true } },
         },
       },
       printTemplate: {
@@ -69,6 +72,7 @@ export default async function EventDetailPage({
           ...product,
           price: product.price === null ? null : String(product.price),
           addedByName: product.addedBy?.name ?? null,
+          printedByName: product.printedBy?.name ?? null,
         })),
       }}
       currentUserId={session.user.id}
