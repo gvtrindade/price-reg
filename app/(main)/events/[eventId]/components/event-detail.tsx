@@ -295,12 +295,7 @@ export function EventDetail({
         </Tabs.Panel>
 
         <Tabs.Panel value="totals">
-          <TotalsTab
-            event={event}
-            products={event.products}
-            t={t}
-            tState={tState}
-          />
+          <TotalsTab eventId={event.id} t={t} tState={tState} />
         </Tabs.Panel>
 
         <Tabs.Panel value="stats">

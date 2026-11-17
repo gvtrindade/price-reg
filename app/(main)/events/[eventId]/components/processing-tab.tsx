@@ -22,6 +22,7 @@ import { Trash2 } from "lucide-react";
 import { useEffect, useState } from "react";
 
 const RECENT_WINDOW_MS = 2 * 60 * 60 * 1000;
+const PROCESSING_WINDOW_MS = 5 * 24 * 60 * 60 * 1000;
 
 /** Shows the first and last name from a full name, dropping middle names. */
 function formatAddedBy(name: string | null): string {
@@ -179,12 +180,17 @@ export function ProcessingTab({
     product.addedById === currentUserId &&
     now - new Date(product.createdAt).getTime() < RECENT_WINDOW_MS;
 
-  const recentProducts = products.filter(isRecent);
-  const otherProducts = products.filter((product) => !isRecent(product));
+  // Processing only shows products registered in the last five days.
+  const visibleProducts = products.filter(
+    (product) =>
+      now - new Date(product.createdAt).getTime() < PROCESSING_WINDOW_MS,
+  );
+  const recentProducts = visibleProducts.filter(isRecent);
+  const otherProducts = visibleProducts.filter((product) => !isRecent(product));
 
   return (
     <div className="space-y-6">
-      {products.length > 0 && (
+      {visibleProducts.length > 0 && (
         <section className="space-y-3">
           <div className="flex items-center justify-between gap-4">
             <h2 className="text-xl font-semibold">{t("recentProducts")}</h2>

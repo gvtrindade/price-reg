@@ -33,6 +33,7 @@ import {
 } from "react";
 
 const RECENT_WINDOW_MS = 2 * 60 * 60 * 1000;
+const PRINTED_WINDOW_MS = 2 * 24 * 60 * 60 * 1000;
 
 // The checked products are kept in sessionStorage so the selection survives
 // page reloads. Follows the same useSyncExternalStore pattern as
@@ -319,6 +320,11 @@ export function PrintingTab({
   const otherQueuedProducts = queuedProducts.filter(
     (product) => !isRecent(product),
   );
+  const recentPrintedProducts = printedProducts.filter(
+    (product) =>
+      product.printedAt !== null &&
+      now - new Date(product.printedAt).getTime() < PRINTED_WINDOW_MS,
+  );
 
   const query = normalizeForSearch(search.trim());
   const filteredQueuedProducts = query
@@ -444,14 +450,16 @@ export function PrintingTab({
         <div className="flex items-center justify-between gap-4">
           <h2 className="text-xl font-semibold">{t("printed")}</h2>
           <span className="text-sm text-muted-foreground">
-            {t("productCount", { count: printedProducts.length })}
+            {t("productCount", { count: recentPrintedProducts.length })}
           </span>
         </div>
-        {printedProducts.length === 0 ? (
-          <p className="text-sm text-muted-foreground">{t("noProducts")}</p>
+        {recentPrintedProducts.length === 0 ? (
+          <p className="text-sm text-muted-foreground">
+            {t("noRecentPrintedProducts")}
+          </p>
         ) : (
           <PrintProductList
-            products={printedProducts}
+            products={recentPrintedProducts}
             event={event}
             t={t}
             onStopPrint={handleStopPrint}

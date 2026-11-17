@@ -6,6 +6,7 @@ import { canManageEvent, isManagerRole } from "@/lib/event-access";
 import { isBookCode } from "@/lib/product-code";
 import { ProductStatus, REPROCESSABLE_STATUSES } from "@/lib/product-status";
 import { prisma } from "@/lib/prisma";
+import { Prisma } from "@/prisma/generated/client";
 import { toTitleCase } from "@/lib/title-case";
 import { webhookToken, printResultWebhookToken } from "@/lib/webhook-token";
 import { headers } from "next/headers";
@@ -201,6 +202,29 @@ export async function addProductAction(data: {
     });
     if (!event || event.status !== "ACTIVE") return { error: t("eventNotFound") };
 
+    // When the volunteer already filled in the title, the author and the price,
+    // there is nothing left to look up: register the product directly. A
+    // product without an external id is "processed" (printable), since the
+    // printer service reserves the catalog id at print time.
+    if (title && author && price !== null) {
+      const productId = crypto.randomUUID();
+      await prisma.product.create({
+        data: {
+          id: productId,
+          eventId: data.eventId,
+          title,
+          author,
+          code,
+          conservationState,
+          status: ProductStatus.PROCESSED,
+          price,
+          priced: true,
+          addedById: session.user.id,
+        },
+      });
+      return { error: null, id: productId };
+    }
+
     const serviceUrl = process.env.NEXT_PRODUCT_PRICE_FINDER_URL;
     const webhookBase = process.env.NEXT_APPLICATION_URL;
 
@@ -278,6 +302,10 @@ export async function addProductAction(data: {
     webhookUrl.searchParams.set("eventId", data.eventId);
     webhookUrl.searchParams.set("token", webhookToken(productId, data.eventId));
 
+    // The price was already informed by the volunteer: only resolve the
+    // missing title/author, never overwrite it with an estimate.
+    const metadataOnly = price !== null && (!title || !author);
+
     let lookup: Response;
     try {
       lookup = await fetch(new URL("/lookup/bookstore", serviceUrl), {
@@ -288,6 +316,7 @@ export async function addProductAction(data: {
           ...(code ? { code } : {}),
           ...(title ? { title } : {}),
           ...(author ? { author } : {}),
+          ...(metadataOnly ? { skip_valuation: true } : {}),
           conservation_state: conservationState,
           webhook_url: webhookUrl.toString(),
         }),
@@ -521,6 +550,74 @@ export async function reprocessProductAction(data: { productId: string }) {
 
     return { error: null };
   });
+}
+
+export async function listEventProductsPageAction(data: {
+  eventId: string;
+  query?: string;
+  offset?: number;
+  limit?: number;
+}) {
+  return Sentry.withServerActionInstrumentation(
+    "listEventProductsPageAction",
+    async () => {
+      const t = await getTranslations("Errors");
+      const session = await requireSession();
+      if (!session) return { error: t("sessionExpired") };
+
+      const roles = (session.user.roles as string[] | undefined) ?? [];
+      if (!(await canManageEvent(session.user.id, roles, data.eventId)))
+        return { error: t("notManager") };
+
+      const limit = Math.min(Math.max(data.limit ?? 25, 1), 100);
+      const offset = Math.max(data.offset ?? 0, 0);
+      const query = data.query?.trim() ?? "";
+
+      const where: Prisma.ProductWhereInput = {
+        eventId: data.eventId,
+        ...(query
+          ? {
+              OR: [
+                { title: { contains: query, mode: "insensitive" } },
+                { author: { contains: query, mode: "insensitive" } },
+                { code: { contains: query, mode: "insensitive" } },
+              ],
+            }
+          : {}),
+      };
+
+      const [products, total, aggregate] = await Promise.all([
+        prisma.product.findMany({
+          where,
+          orderBy: [{ createdAt: "desc" }, { id: "desc" }],
+          skip: offset,
+          take: limit,
+          select: {
+            id: true,
+            title: true,
+            code: true,
+            conservationState: true,
+            price: true,
+          },
+        }),
+        prisma.product.count({ where }),
+        prisma.product.aggregate({ where, _sum: { price: true } }),
+      ]);
+
+      const nextOffset = offset + products.length;
+      return {
+        error: null,
+        products: products.map((product) => ({
+          ...product,
+          price: product.price === null ? null : String(product.price),
+        })),
+        total,
+        totalValue:
+          aggregate._sum.price === null ? "0" : String(aggregate._sum.price),
+        nextOffset: nextOffset < total ? nextOffset : null,
+      };
+    },
+  );
 }
 
 export async function deleteProductAction(data: { productId: string }) {

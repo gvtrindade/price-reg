@@ -12,6 +12,7 @@ interface ValuationPayload {
   estimated_value?: unknown;
   status?: unknown;
   error?: unknown;
+  metadata_only?: unknown;
 }
 
 function cleanText(value: unknown): string | null {
@@ -58,13 +59,21 @@ export async function POST(request: NextRequest) {
   const errorMessage = cleanText(payload.error);
   const isError = status === "error";
   const isNotFound = status === "not_found";
+  // Metadata-only lookups (price already informed by the volunteer) carry no
+  // estimated value but must still persist the resolved title/author.
+  const isMetadataOnly = payload.metadata_only === true;
 
   const product = await prisma.product.findUnique({ where: { id: productId } });
   if (!product) {
     // The service delivers its webhook while the registering request is still
     // in flight. Without a valuation or error there is nothing worth persisting yet:
     // the registering action creates the row itself.
-    if (estimatedValue === null && !isError && !isNotFound) {
+    if (
+      estimatedValue === null &&
+      !isError &&
+      !isNotFound &&
+      !isMetadataOnly
+    ) {
       return NextResponse.json({ error: "product not found" }, { status: 404 });
     }
     try {
