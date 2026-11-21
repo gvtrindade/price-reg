@@ -17,6 +17,7 @@ import {
   PRODUCT_STATUS_LABEL_KEYS,
   ProductStatus,
 } from "@/lib/product-status";
+import { eventTabQuery } from "@/lib/event-tabs";
 import Link from "next/link";
 import { Trash2 } from "lucide-react";
 import { useEffect, useState } from "react";
@@ -38,6 +39,7 @@ function ProductListItem({
   event,
   canManage,
   isActive,
+  tab,
   t,
   tStatus,
   onDelete,
@@ -46,6 +48,7 @@ function ProductListItem({
   event: EventData;
   canManage: boolean;
   isActive: boolean;
+  tab: string;
   t: (key: string, values?: Record<string, string | number>) => string;
   tStatus: (key: "added" | "registered" | "processed" | "error" | "notFound" | "queued" | "printing" | "printed") => string;
   onDelete: (productId: string) => void;
@@ -54,7 +57,7 @@ function ProductListItem({
   return (
     <li className="relative flex items-center gap-4 p-4 transition-colors hover:bg-accent/50">
       <Link
-        href={`/events/${event.id}/products/${product.id}`}
+        href={`/events/${event.id}/products/${product.id}${eventTabQuery(tab)}`}
         aria-label={t("openProduct")}
         className="absolute inset-0 rounded-lg outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
       />
@@ -119,6 +122,7 @@ function ProductList({
   event,
   canManage,
   isActive,
+  tab,
   t,
   tStatus,
   onDelete,
@@ -127,6 +131,7 @@ function ProductList({
   event: EventData;
   canManage: boolean;
   isActive: boolean;
+  tab: string;
   t: (key: string, values?: Record<string, string | number>) => string;
   tStatus: (key: "added" | "registered" | "processed" | "error" | "notFound" | "queued" | "printing" | "printed") => string;
   onDelete: (productId: string) => void;
@@ -141,6 +146,7 @@ function ProductList({
           event={event}
           canManage={canManage}
           isActive={isActive}
+          tab={tab}
           t={t}
           tStatus={tStatus}
           onDelete={onDelete}
@@ -156,6 +162,7 @@ export function ProcessingTab({
   currentUserId,
   canManage,
   isActive,
+  tab,
   t,
   tStatus,
   onDelete,
@@ -165,6 +172,7 @@ export function ProcessingTab({
   currentUserId: string;
   canManage: boolean;
   isActive: boolean;
+  tab: string;
   t: (key: string, values?: Record<string, string | number>) => string;
   tStatus: (key: "added" | "registered" | "processed" | "error" | "notFound" | "queued" | "printing" | "printed") => string;
   onDelete: (productId: string) => void;
@@ -208,6 +216,7 @@ export function ProcessingTab({
               event={event}
               canManage={canManage}
               isActive={isActive}
+              tab={tab}
               t={t}
               tStatus={tStatus}
               onDelete={onDelete}
@@ -237,6 +246,7 @@ export function ProcessingTab({
             event={event}
             canManage={canManage}
             isActive={isActive}
+            tab={tab}
             t={t}
             tStatus={tStatus}
             onDelete={onDelete}

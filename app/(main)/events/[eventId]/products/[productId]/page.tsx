@@ -1,5 +1,6 @@
 import { auth } from "@/lib/auth";
 import { isManagerRole } from "@/lib/event-access";
+import { normalizeEventTab } from "@/lib/event-tabs";
 import { REPROCESSABLE_STATUSES, PROCESSING_STATUSES } from "@/lib/product-status";
 import { prisma } from "@/lib/prisma";
 import { ProductDetail } from "./components/product-detail";
@@ -8,8 +9,10 @@ import { redirect } from "next/navigation";
 
 export default async function ProductDetailPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ eventId: string; productId: string }>;
+  searchParams: Promise<{ tab?: string }>;
 }) {
   const session = await auth.api.getSession({ headers: await headers() });
   if (!session?.user) redirect("/login");
@@ -18,6 +21,8 @@ export default async function ProductDetailPage({
   const isManager = isManagerRole(roles);
 
   const { eventId, productId } = await params;
+  const { tab } = await searchParams;
+  const fromTab = normalizeEventTab(tab);
   const product = await prisma.product.findFirst({
     where: { id: productId, eventId },
     include: {
@@ -70,6 +75,7 @@ export default async function ProductDetailPage({
     <ProductDetail
       product={{
         id: product.id,
+        type: product.type,
         title: product.title,
         author: product.author,
         code: product.code,
@@ -83,6 +89,7 @@ export default async function ProductDetailPage({
       canReprocess={canReprocess}
       previousProductId={previousProductId}
       nextProductId={nextProductId}
+      fromTab={fromTab}
     />
   );
 }

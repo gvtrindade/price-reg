@@ -5,6 +5,11 @@
     "good": "Bom (G)",
     "fair": "Regular"
   },
+  "ProductType": {
+    "book": "Livro",
+    "cd": "CD",
+    "dvd": "DVD"
+  },
   "ProductStatus": {
     "added": "Adicionado",
     "registered": "Registrado",
@@ -164,7 +169,8 @@
     "printServiceNotConfigured": "O serviço de impressão não está configurado.",
     "printServiceUnreachable": "O serviço de impressão está indisponível.",
     "printServiceRejected": "O serviço de impressão rejeitou a solicitação.",
-    "invalidSvg": "O arquivo deve ser um SVG válido."
+    "invalidSvg": "O arquivo deve ser um SVG válido.",
+    "invalidProductType": "O tipo do produto é inválido"
   },
   "Emails": {
     "resetPassword": {
@@ -380,6 +386,7 @@
     "author": "Autor",
     "unknownAuthor": "Desconhecido",
     "code": "Código",
+    "type": "Tipo",
     "price": "Preço",
     "conservationState": "Estado de conservação",
     "status": "Status",
@@ -416,6 +423,7 @@
     "codePlaceholder": "Código do produto",
     "priceField": "Preço (opcional)",
     "pricePlaceholder": "Preço do produto",
+    "typeField": "Tipo",
     "conservationState": "Estado de conservação",
     "selectConservation": "Selecione o estado de conservação",
     "nameOrCodeRequired": "Informe um código ou um título.",

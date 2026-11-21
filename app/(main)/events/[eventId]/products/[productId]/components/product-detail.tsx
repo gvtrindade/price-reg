@@ -2,6 +2,12 @@
 
 import { deleteProductAction, duplicateProductAction, printProductsAction, reprocessProductAction, updateProductAction } from "@/actions/events";
 import { InlineEdit } from "@/components/inline-edit";
+import { eventTabQuery, type EventTab } from "@/lib/event-tabs";
+import {
+  PRODUCT_TYPE_LABEL_KEYS,
+  PRODUCT_TYPE_OPTIONS,
+  ProductType,
+} from "@/lib/product-type";
 import {
   PRODUCT_STATUS_LABEL_KEYS,
   EDITABLE_PRODUCT_STATUSES,
@@ -45,8 +51,14 @@ const STATUS_OPTIONS = EDITABLE_PRODUCT_STATUSES.map((value) => ({
   labelKey: PRODUCT_STATUS_LABEL_KEYS[value as ProductStatus],
 }));
 
+const TYPE_OPTIONS = PRODUCT_TYPE_OPTIONS.map((value) => ({
+  value,
+  labelKey: PRODUCT_TYPE_LABEL_KEYS[value],
+}));
+
 interface ProductData {
   id: string;
+  type: ProductType;
   title: string | null;
   author: string | null;
   code: string | null;
@@ -63,6 +75,7 @@ export function ProductDetail({
   canReprocess,
   previousProductId,
   nextProductId,
+  fromTab,
 }: {
   product: ProductData;
   eventId: string;
@@ -71,10 +84,12 @@ export function ProductDetail({
   canReprocess: boolean;
   previousProductId: string | null;
   nextProductId: string | null;
+  fromTab: EventTab;
 }) {
   const t = useTranslations("ProductDetail");
   const tState = useTranslations("ConservationState");
   const tStatus = useTranslations("ProductStatus");
+  const tType = useTranslations("ProductType");
   const router = useRouter();
   const [error, setError] = useState<string | null>(null);
   const [deleteOpen, setDeleteOpen] = useState(false);
@@ -96,7 +111,7 @@ export function ProductDetail({
   }
 
   function save(
-    field: "title" | "author" | "price" | "conservationState" | "status",
+    field: "type" | "title" | "author" | "price" | "conservationState" | "status",
   ) {
     return async (value: string) => {
       setError(null);
@@ -117,7 +132,7 @@ export function ProductDetail({
           className="fixed top-1/2 left-2 z-20 -translate-y-1/2 rounded-full shadow-sm md:left-6"
           render={
             <Link
-              href={`/events/${eventId}/products/${previousProductId}`}
+              href={`/events/${eventId}/products/${previousProductId}${eventTabQuery(fromTab)}`}
             />
           }
           nativeButton={false}
@@ -132,7 +147,9 @@ export function ProductDetail({
           aria-label={t("nextProduct")}
           className="fixed top-1/2 right-2 z-20 -translate-y-1/2 rounded-full shadow-sm md:right-6"
           render={
-            <Link href={`/events/${eventId}/products/${nextProductId}`} />
+            <Link
+              href={`/events/${eventId}/products/${nextProductId}${eventTabQuery(fromTab)}`}
+            />
           }
           nativeButton={false}
         >
@@ -144,7 +161,7 @@ export function ProductDetail({
           variant="ghost"
           size="sm"
           className="-ml-2"
-          render={<Link href={`/events/${eventId}`} />}
+          render={<Link href={`/events/${eventId}${eventTabQuery(fromTab)}`} />}
           nativeButton={false}
         >
           <ArrowLeft />
@@ -212,7 +229,9 @@ export function ProductDetail({
                   setDuplicating(false);
                   if (res?.error) setError(res.error);
                   else if (res?.id) {
-                    router.push(`/events/${eventId}/products/${res.id}`);
+                    router.push(
+                      `/events/${eventId}/products/${res.id}${eventTabQuery(fromTab)}`,
+                    );
                     router.refresh();
                   }
                 }}
@@ -231,6 +250,19 @@ export function ProductDetail({
       {error && <p className="text-sm text-destructive">{error}</p>}
 
       <dl className="space-y-1 rounded-lg border">
+        <Field label={t("type")}>
+          <InlineEdit
+            value={product.type}
+            editable={canEdit}
+            label={t("type")}
+            onSave={save("type")}
+            onError={setError}
+            options={TYPE_OPTIONS.map((o) => ({
+              value: o.value,
+              label: tType(o.labelKey),
+            }))}
+          />
+        </Field>
         <Field label={t("code")}>
           <span className="text-sm tabular-nums">
             {product.code || <span className="text-muted-foreground">—</span>}
@@ -304,7 +336,7 @@ export function ProductDetail({
                 const res = await deleteProductAction({ productId: product.id });
                 if (res?.error) setError(res.error);
                 else {
-                  router.push(`/events/${eventId}`);
+                  router.push(`/events/${eventId}${eventTabQuery(fromTab)}`);
                   router.refresh();
                 }
               }}

@@ -97,6 +97,14 @@ enum EventStatus {
   @@map("event_status")
 }
 
+enum ProductType {
+  BOOK
+  CD
+  DVD
+
+  @@map("product_type")
+}
+
 model Event {
   id        String      @id @default(cuid())
   title     String
@@ -123,7 +131,8 @@ model EventUser {
 }
 
 model Product {
-  id                String   @id @default(cuid())
+  id                String      @id @default(cuid())
+  type              ProductType @default(BOOK)
   title             String?
   author            String?
   code              String?

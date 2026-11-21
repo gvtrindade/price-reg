@@ -13,6 +13,11 @@ import {
 } from "@/components/ui/drawer";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import {
+  PRODUCT_TYPE_LABEL_KEYS,
+  PRODUCT_TYPE_OPTIONS,
+  ProductType,
+} from "@/lib/product-type";
 
 const CONSERVATION_OPTIONS = [
   { value: "As New", labelKey: "asNew" },
@@ -32,9 +37,11 @@ type Step = "options" | "manual" | "scan" | "confirm";
 export function AddProductDrawer({ eventId }: { eventId: string }) {
   const t = useTranslations("AddProductDrawer");
   const tState = useTranslations("ConservationState");
+  const tType = useTranslations("ProductType");
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [step, setStep] = useState<Step>("options");
+  const [type, setType] = useState<ProductType>(ProductType.BOOK);
   const [title, setTitle] = useState("");
   const [author, setAuthor] = useState("");
   const [code, setCode] = useState("");
@@ -47,6 +54,7 @@ export function AddProductDrawer({ eventId }: { eventId: string }) {
   function close() {
     setOpen(false);
     setStep("options");
+    setType(ProductType.BOOK);
     setTitle("");
     setAuthor("");
     setCode("");
@@ -80,6 +88,7 @@ export function AddProductDrawer({ eventId }: { eventId: string }) {
     setError(null);
     const res = await addProductAction({
       eventId,
+      type,
       title,
       author,
       code,
@@ -186,6 +195,21 @@ export function AddProductDrawer({ eventId }: { eventId: string }) {
               <DrawerDescription>{t("manualFormDescription")}</DrawerDescription>
             </DrawerHeader>
             <div className="space-y-4 p-4">
+              <div className="space-y-2">
+                <Label htmlFor="product-type">{t("typeField")}</Label>
+                <select
+                  id="product-type"
+                  value={type}
+                  onChange={(e) => setType(e.target.value as ProductType)}
+                  className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-xs outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
+                >
+                  {PRODUCT_TYPE_OPTIONS.map((opt) => (
+                    <option key={opt} value={opt}>
+                      {tType(PRODUCT_TYPE_LABEL_KEYS[opt])}
+                    </option>
+                  ))}
+                </select>
+              </div>
               <div className="space-y-2">
                 <Label htmlFor="product-title">{t("nameField")}</Label>
                 <Input

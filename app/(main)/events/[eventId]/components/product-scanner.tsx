@@ -26,6 +26,8 @@ function getBarcodeDetector(): BarcodeDetectorConstructor | undefined {
 
 const CODE_FORMATS = ["ean_13", "ean_8", "upc_a", "upc_e"];
 const DEFAULT_CAMERA_KEY = "scanner.defaultCameraId";
+const CAMERA_START_TIMEOUT = 10_000;
+const MAX_DECODE_WIDTH = 960;
 
 async function supportedCheck(
   Detector: BarcodeDetectorConstructor,
@@ -71,12 +73,16 @@ async function createZXingDetector(): Promise<BarcodeDetectorLike> {
 
   return {
     detect: async (source) => {
-      const { videoWidth: width, videoHeight: height } =
-        source as HTMLVideoElement;
-      if (!context || !width || !height) return [];
-      canvas.width = width;
-      canvas.height = height;
-      context.drawImage(source, 0, 0, width, height);
+      const video = source as HTMLVideoElement;
+      const { videoWidth, videoHeight } = video;
+      if (!context || !videoWidth || !videoHeight) return [];
+
+      // Decoding a full-resolution iPhone camera frame can block Safari's main
+      // thread. A smaller frame is sufficient for EAN/UPC barcodes.
+      const scale = Math.min(1, MAX_DECODE_WIDTH / videoWidth);
+      canvas.width = Math.round(videoWidth * scale);
+      canvas.height = Math.round(videoHeight * scale);
+      context.drawImage(source, 0, 0, canvas.width, canvas.height);
       const luminance = new HTMLCanvasElementLuminanceSource(canvas);
       const bitmap = new BinaryBitmap(new HybridBinarizer(luminance));
       try {
@@ -98,10 +104,7 @@ async function createZXingDetector(): Promise<BarcodeDetectorLike> {
 
 async function createDetector(): Promise<BarcodeDetectorLike> {
   const Detector = getBarcodeDetector();
-  if (Detector) {
-    if (!(await supportedCheck(Detector))) {
-      throw new Error("native-detector-missing-formats");
-    }
+  if (Detector && (await supportedCheck(Detector))) {
     return new Detector({ formats: CODE_FORMATS });
   }
   try {
@@ -114,30 +117,71 @@ async function createDetector(): Promise<BarcodeDetectorLike> {
 }
 
 async function getCameraStream(deviceId: string): Promise<MediaStream> {
+  const resolution = {
+    width: { ideal: 1280 },
+    height: { ideal: 720 },
+  };
   const candidates: MediaTrackConstraints[] = [
     ...(deviceId && deviceId !== "0"
-      ? [{ deviceId: { exact: deviceId } }]
+      ? [{ deviceId: { exact: deviceId }, ...resolution }]
       : []),
-    { facingMode: { ideal: "environment" } },
+    { facingMode: { ideal: "environment" }, ...resolution },
     {},
   ];
   let lastError: unknown;
   for (const video of candidates) {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ video });
-      try {
-        await stream.getVideoTracks()[0]?.applyConstraints({
+      // This hint improves autofocus where supported, but Safari can leave the
+      // promise pending. Camera startup must never depend on it.
+      void stream
+        .getVideoTracks()[0]
+        ?.applyConstraints({
           advanced: [{ focusMode: "continuous" } as MediaTrackConstraintSet],
-        });
-      } catch {
-        /* constraint unsupported */
-      }
+        })
+        .catch(() => undefined);
       return stream;
     } catch (error) {
       lastError = error;
     }
   }
   throw lastError;
+}
+
+function playVideo(video: HTMLVideoElement, stream: MediaStream): Promise<void> {
+  return new Promise((resolve, reject) => {
+    const cleanup = () => {
+      clearTimeout(timeout);
+      video.removeEventListener("loadeddata", onReady);
+      video.removeEventListener("canplay", onReady);
+      video.removeEventListener("error", onVideoError);
+    };
+    const onReady = () => {
+      cleanup();
+      resolve();
+    };
+    const onError = (error: unknown) => {
+      cleanup();
+      reject(error instanceof Error ? error : new Error("video-playback-failed"));
+    };
+    const onVideoError = () => onError(new Error("video-playback-failed"));
+
+    video.addEventListener("loadeddata", onReady);
+    video.addEventListener("canplay", onReady);
+    video.addEventListener("error", onVideoError);
+    const timeout = setTimeout(
+      () => onError(new Error("camera-start-timeout")),
+      CAMERA_START_TIMEOUT,
+    );
+
+    video.srcObject = stream;
+    video.muted = true;
+    if (video.readyState >= 2) {
+      onReady();
+      return;
+    }
+    video.play().then(onReady).catch(onError);
+  });
 }
 
 export function ProductScanner({
@@ -149,6 +193,7 @@ export function ProductScanner({
 }) {
   const t = useTranslations("ProductScanner");
   const videoRef = useRef<HTMLVideoElement>(null);
+  const onDetectedRef = useRef(onDetected);
   const [status, setStatus] = useState<
     "idle" | "starting" | "scanning" | "unsupported" | "error"
   >("idle");
@@ -166,10 +211,66 @@ export function ProductScanner({
   );
 
   useEffect(() => {
+    onDetectedRef.current = onDetected;
+  }, [onDetected]);
+
+  useEffect(() => {
+    const videoElement = videoRef.current;
     let stream: MediaStream | null = null;
-    let interval: ReturnType<typeof setInterval> | null = null;
+    let scanTimeout: ReturnType<typeof setTimeout> | null = null;
     let detector: BarcodeDetectorLike | null = null;
+    let detecting = false;
     let stopped = false;
+
+    async function updateCameraList() {
+      try {
+        const devices = await navigator.mediaDevices.enumerateDevices();
+        if (stopped) return;
+        const videoInputs = devices.filter((d) => d.kind === "videoinput");
+        setCameras(videoInputs);
+        const activeId = stream?.getVideoTracks()[0]?.getSettings().deviceId;
+        if (
+          activeId &&
+          activeId !== deviceId &&
+          (deviceId === "0" ||
+            !videoInputs.some((device) => device.deviceId === deviceId))
+        ) {
+          setDeviceId(activeId);
+        }
+      } catch {
+        /* camera list unavailable */
+      }
+    }
+
+    async function scan() {
+      if (stopped) return;
+      const currentVideo = videoRef.current;
+      if (
+        currentVideo &&
+        detector &&
+        !detecting &&
+        currentVideo.readyState >= 2
+      ) {
+        detecting = true;
+        try {
+          const codes = await detector.detect(currentVideo);
+          const value = codes
+            .map((code) => code.rawValue?.replace(/[^0-9]/g, "") ?? "")
+            .find((digits) => digits.length >= 8 && digits.length <= 14);
+          if (value && !stopped) {
+            stopped = true;
+            navigator.vibrate?.(120);
+            onDetectedRef.current(value);
+            return;
+          }
+        } catch {
+          /* frame failed, keep scanning */
+        } finally {
+          detecting = false;
+        }
+      }
+      scanTimeout = setTimeout(scan, 250);
+    }
 
     async function start() {
       setStatus("starting");
@@ -193,6 +294,7 @@ export function ProductScanner({
       try {
         stream = await getCameraStream(deviceId);
       } catch (error) {
+        if (stopped) return;
         setDebugInfo(
           error instanceof Error
             ? `${error.name}: ${error.message}`
@@ -205,58 +307,40 @@ export function ProductScanner({
         stream.getTracks().forEach((track) => track.stop());
         return;
       }
-      const video = videoRef.current;
-      if (!video) return;
-      video.srcObject = stream;
-      await video.play().catch(() => undefined);
-
-      try {
-        const devices = await navigator.mediaDevices.enumerateDevices();
-        const videoInputs = devices.filter(
-          (d) => d.kind === "videoinput",
-        );
-        setCameras(videoInputs);
-        const activeId = stream
-          ?.getVideoTracks()[0]
-          ?.getSettings().deviceId;
-        if (
-          activeId &&
-          !videoInputs.some((d) => d.deviceId === deviceId)
-        ) {
-          setDeviceId(activeId);
-        }
-      } catch {
-        /* camera list unavailable */
+      if (!videoElement) {
+        stream.getTracks().forEach((track) => track.stop());
+        return;
       }
+      try {
+        await playVideo(videoElement, stream);
+      } catch (error) {
+        if (stopped) return;
+        stream.getTracks().forEach((track) => track.stop());
+        setDebugInfo(error instanceof Error ? error.message : String(error));
+        setStatus("error");
+        return;
+      }
+      if (stopped) return;
 
+      // enumerateDevices() is informational and can be slow on iOS. It must
+      // not prevent the live preview and decoder from starting.
+      void updateCameraList();
       setStatus("scanning");
-
-      interval = setInterval(async () => {
-        const currentVideo = videoRef.current;
-        if (!currentVideo || !detector || currentVideo.readyState < 2) return;
-        try {
-          const codes = await detector.detect(currentVideo);
-          const value = codes
-            .map((code) => code.rawValue?.replace(/[^0-9]/g, "") ?? "")
-            .find((digits) => digits.length >= 8 && digits.length <= 14);
-          if (value) {
-            navigator.vibrate?.(120);
-            onDetected(value);
-          }
-        } catch {
-          /* frame failed, keep scanning */
-        }
-      }, 350);
+      scanTimeout = setTimeout(scan, 250);
     }
 
     void start();
 
     return () => {
       stopped = true;
-      if (interval) clearInterval(interval);
+      if (scanTimeout) clearTimeout(scanTimeout);
       stream?.getTracks().forEach((track) => track.stop());
+      if (videoElement) {
+        videoElement.pause();
+        videoElement.srcObject = null;
+      }
     };
-  }, [deviceId, onDetected]);
+  }, [deviceId]);
 
   function saveAsDefault() {
     localStorage.setItem(DEFAULT_CAMERA_KEY, deviceId);
@@ -268,6 +352,7 @@ export function ProductScanner({
       <div className="relative aspect-square w-full overflow-hidden rounded-xl bg-black">
         <video
           ref={videoRef}
+          autoPlay
           muted
           playsInline
           className="size-full object-cover"
@@ -277,7 +362,7 @@ export function ProductScanner({
           aria-hidden
         />
         {status !== "scanning" && status !== "idle" && (
-          <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 bg-black/70 p-4 text-center text-sm text-white">
+          <div className="absolute inset-0 z-10 flex flex-col items-center justify-center gap-2 bg-black/70 p-4 text-center text-sm text-white">
             {status === "starting" && <p>{t("starting")}</p>}
             {status === "unsupported" && (
               <>

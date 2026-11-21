@@ -1,3 +1,4 @@
+import { ProductType } from "@/lib/product-type";
 import { prisma } from "@/lib/prisma";
 import { verifyWebhookToken } from "@/lib/webhook-token";
 import { Prisma } from "@/prisma/generated/client";
@@ -5,6 +6,7 @@ import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 
 interface ValuationPayload {
+  product_type?: unknown;
   title?: unknown;
   author?: unknown;
   code?: unknown;
@@ -13,6 +15,20 @@ interface ValuationPayload {
   status?: unknown;
   error?: unknown;
   metadata_only?: unknown;
+}
+
+function cleanProductType(value: unknown): ProductType | null {
+  if (typeof value !== "string") return null;
+  switch (value.trim().toLowerCase()) {
+    case "book":
+      return ProductType.BOOK;
+    case "cd":
+      return ProductType.CD;
+    case "dvd":
+      return ProductType.DVD;
+    default:
+      return null;
+  }
 }
 
 function cleanText(value: unknown): string | null {
@@ -51,6 +67,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "invalid JSON body" }, { status: 400 });
   }
 
+  const productType = cleanProductType(payload.product_type) ?? ProductType.BOOK;
   const title = cleanText(payload.title);
   const author = cleanText(payload.author);
   const code = cleanText(payload.code);
@@ -81,6 +98,7 @@ export async function POST(request: NextRequest) {
         data: {
           id: productId,
           eventId,
+          type: productType,
           title,
           author,
           code,

@@ -3,7 +3,11 @@
 import * as Sentry from "@sentry/nextjs";
 import { auth } from "@/lib/auth";
 import { canManageEvent, isManagerRole } from "@/lib/event-access";
-import { isBookCode } from "@/lib/product-code";
+import {
+  PRODUCT_TYPE_OPTIONS,
+  ProductType,
+  productTypeApiValue,
+} from "@/lib/product-type";
 import { ProductStatus, REPROCESSABLE_STATUSES } from "@/lib/product-status";
 import { prisma } from "@/lib/prisma";
 import { Prisma } from "@/prisma/generated/client";
@@ -118,9 +122,11 @@ type ProductFieldError =
   | "invalidAuthor"
   | "invalidPrice"
   | "invalidConservationState"
-  | "invalidStatus";
+  | "invalidStatus"
+  | "invalidProductType";
 
 function parseProductData(data: {
+  type?: string;
   title?: string;
   author?: string;
   price?: string;
@@ -128,6 +134,7 @@ function parseProductData(data: {
   status?: string;
 }) {
   const out: {
+    type?: ProductType;
     title?: string;
     author?: string;
     price?: number;
@@ -136,6 +143,11 @@ function parseProductData(data: {
     status?: string;
   } = {};
 
+  if (data.type !== undefined) {
+    if (!PRODUCT_TYPE_OPTIONS.includes(data.type as ProductType))
+      return { error: "invalidProductType" as ProductFieldError };
+    out.type = data.type as ProductType;
+  }
   if (data.title !== undefined) {
     const title = data.title.trim();
     if (!title) return { error: "invalidTitle" as ProductFieldError };
@@ -168,6 +180,7 @@ function parseProductData(data: {
 
 export async function addProductAction(data: {
   eventId: string;
+  type?: string;
   title?: string;
   author?: string;
   code?: string;
@@ -178,6 +191,10 @@ export async function addProductAction(data: {
     const t = await getTranslations("Errors");
     const session = await requireSession();
     if (!session) return { error: t("sessionExpired") };
+
+    const type = (data.type ?? ProductType.BOOK) as ProductType;
+    if (!PRODUCT_TYPE_OPTIONS.includes(type))
+      return { error: t("invalidProductType") };
 
     const title = data.title?.trim() || null;
     const author = data.author?.trim() || null;
@@ -212,6 +229,7 @@ export async function addProductAction(data: {
         data: {
           id: productId,
           eventId: data.eventId,
+          type,
           title,
           author,
           code,
@@ -228,55 +246,63 @@ export async function addProductAction(data: {
     const serviceUrl = process.env.NEXT_PRODUCT_PRICE_FINDER_URL;
     const webhookBase = process.env.NEXT_APPLICATION_URL;
 
-    // Products are not typed in the database: the barcode only routes the
-    // lookup. ISBNs go through the bookstore valuation service; any other
-    // EAN/UPC is a CD/DVD, looked up synchronously on Discogs (metadata only,
-    // no price). Manually entered data always wins over a lookup -- that is
-    // the DVD path, where everything is filled in by hand.
-    if (code && !isBookCode(code) && !title) {
+    // The product type chosen by the volunteer decides the lookup flow; the
+    // barcode shape is never inspected to guess it. Books go through the
+    // bookstore valuation service; CDs/DVDs are looked up synchronously on
+    // Discogs (metadata only, no price). Manually entered data always wins
+    // over a lookup.
+    if (type !== ProductType.BOOK) {
       if (!serviceUrl) return { error: t("priceFinderNotConfigured") };
 
       const discogsProductId = crypto.randomUUID();
-      let discogsTitle: string | null = null;
-      let discogsAuthor: string | null = null;
-      let discogsStatus: string = ProductStatus.ERROR;
+      let discogsTitle: string | null = title;
+      let discogsAuthor: string | null = author;
+      let discogsStatus: string = ProductStatus.ADDED;
 
-      try {
-        const lookup = await fetch(new URL("/lookup/discogs", serviceUrl), {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          cache: "no-store",
-          signal: AbortSignal.timeout(15_000),
-          body: JSON.stringify({ code }),
-        });
-        if (lookup.ok) {
-          const result = (await lookup.json()) as {
-            status?: string;
-            title?: string;
-            artist?: string;
-          };
-          if (result.status === "ok") {
-            discogsTitle = result.title?.trim() || null;
-            discogsAuthor = result.artist?.trim() || null;
-            // No price is estimated for CDs/DVDs: the product waits for the
-            // manager to price it (updateProductAction then promotes it).
-            discogsStatus = ProductStatus.ADDED;
-          } else {
-            // Discogs does not catalog DVDs, and some CDs have no entry:
-            // leave the product for manual completion.
-            discogsStatus = ProductStatus.NOT_FOUND;
-          }
-        }
-        // An unavailable Discogs must never block adding the product: keep it
-        // as "error" so it is visible and can be reprocessed or filled by hand.
-      } catch {
+      if (code) {
         discogsStatus = ProductStatus.ERROR;
+        try {
+          const lookup = await fetch(new URL("/lookup/discogs", serviceUrl), {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            cache: "no-store",
+            signal: AbortSignal.timeout(15_000),
+            body: JSON.stringify({
+              code,
+              product_type: productTypeApiValue(type),
+            }),
+          });
+          if (lookup.ok) {
+            const result = (await lookup.json()) as {
+              status?: string;
+              title?: string;
+              artist?: string;
+            };
+            if (result.status === "ok") {
+              discogsTitle = title ?? result.title?.trim() ?? null;
+              discogsAuthor = author ?? result.artist?.trim() ?? null;
+              // No price is estimated for CDs/DVDs: the product waits for the
+              // manager to price it (updateProductAction then promotes it).
+              discogsStatus = ProductStatus.ADDED;
+            } else {
+              // Discogs does not catalog DVDs, and some CDs have no entry:
+              // leave the product for manual completion.
+              discogsStatus = ProductStatus.NOT_FOUND;
+            }
+          }
+          // An unavailable Discogs must never block adding the product: keep
+          // it as "error" so it is visible and can be reprocessed or filled by
+          // hand.
+        } catch {
+          discogsStatus = ProductStatus.ERROR;
+        }
       }
 
       await prisma.product.create({
         data: {
           id: discogsProductId,
           eventId: data.eventId,
+          type,
           title: discogsTitle,
           author: discogsAuthor,
           code,
@@ -313,6 +339,7 @@ export async function addProductAction(data: {
         headers: { "Content-Type": "application/json" },
         cache: "no-store",
         body: JSON.stringify({
+          product_type: productTypeApiValue(type),
           ...(code ? { code } : {}),
           ...(title ? { title } : {}),
           ...(author ? { author } : {}),
@@ -337,6 +364,7 @@ export async function addProductAction(data: {
       create: {
         id: productId,
         eventId: data.eventId,
+        type,
         title,
         author,
         code,
@@ -352,6 +380,7 @@ export async function addProductAction(data: {
       // The webhook may have created the row first, without a user, so always
       // attribute it to the volunteer performing the lookup.
       update: {
+        type,
         addedById: session.user.id,
         ...(price !== null ? { price, priced: true } : {}),
       },
@@ -384,6 +413,7 @@ async function readLookupError(response: Response): Promise<string | null> {
 
 export async function updateProductAction(data: {
   productId: string;
+  type?: string;
   title?: string;
   author?: string;
   price?: string;
@@ -474,16 +504,20 @@ export async function reprocessProductAction(data: { productId: string }) {
     const serviceUrl = process.env.NEXT_PRODUCT_PRICE_FINDER_URL;
     if (!serviceUrl) return { error: t("priceFinderNotConfigured") };
 
-    // Non-ISBN codes are CDs/DVDs: re-run the synchronous Discogs lookup
-    // instead of sending them to the ISBN-only bookstore flow.
-    if (product.code && !isBookCode(product.code)) {
+    // The product type decides the flow: CDs/DVDs re-run the synchronous
+    // Discogs lookup instead of going to the ISBN-only bookstore flow.
+    if (product.type !== ProductType.BOOK) {
+      if (!product.code) return { error: t("productNotRegistered") };
       try {
         const lookup = await fetch(new URL("/lookup/discogs", serviceUrl), {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           cache: "no-store",
           signal: AbortSignal.timeout(15_000),
-          body: JSON.stringify({ code: product.code }),
+          body: JSON.stringify({
+            code: product.code,
+            product_type: productTypeApiValue(product.type),
+          }),
         });
         if (!lookup.ok) {
           const detail = await readLookupError(lookup);
@@ -532,6 +566,7 @@ export async function reprocessProductAction(data: { productId: string }) {
         headers: { "Content-Type": "application/json" },
         cache: "no-store",
         body: JSON.stringify({
+          product_type: productTypeApiValue(ProductType.BOOK),
           ...(product.code ? { code: product.code } : {}),
           ...(product.title ? { title: product.title } : {}),
           ...(product.author ? { author: product.author } : {}),
@@ -643,6 +678,7 @@ export async function duplicateProductAction(data: { productId: string }) {
     const product = await prisma.product.findUnique({
       where: { id: data.productId },
       select: {
+        type: true,
         title: true,
         author: true,
         code: true,
@@ -661,6 +697,7 @@ export async function duplicateProductAction(data: { productId: string }) {
     // an unpriced one waits for manual pricing as "added".
     const duplicate = await prisma.product.create({
       data: {
+        type: product.type,
         title: product.title,
         author: product.author,
         code: product.code,

@@ -39,6 +39,7 @@ import {
   PRINTING_IN_PROGRESS_STATUSES,
   PRINTING_DONE_STATUSES,
 } from "@/lib/product-status";
+import { normalizeEventTab, type EventTab } from "@/lib/event-tabs";
 import { cn } from "@/lib/utils";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -75,7 +76,7 @@ export const CONSERVATION_LABELS: Record<string, string> = {
 };
 
 const tabClass = cn(
-  "cursor-pointer rounded-t-lg px-4 py-2 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground",
+  "cursor-pointer shrink-0 whitespace-nowrap rounded-t-lg px-4 py-2 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground",
   "data-[active]:bg-accent data-[active]:text-accent-foreground",
 );
 
@@ -86,6 +87,7 @@ export function EventDetail({
   canManageProducts,
   users,
   assignedUserIds,
+  initialTab,
 }: {
   event: EventData;
   currentUserId: string;
@@ -93,6 +95,7 @@ export function EventDetail({
   canManageProducts: boolean;
   users: EventMemberUser[];
   assignedUserIds: string[];
+  initialTab: EventTab;
 }) {
   const t = useTranslations("EventDetail");
   const tState = useTranslations("ConservationState");
@@ -101,9 +104,22 @@ export function EventDetail({
   const [error, setError] = useState<string | null>(null);
   const [cancelDialogOpen, setCancelDialogOpen] = useState(false);
   const [membersDialogOpen, setMembersDialogOpen] = useState(false);
-  const [activeTab, setActiveTab] = useState("processing");
+  const [activeTab, setActiveTab] = useState<EventTab>(initialTab);
+  const [previousInitialTab, setPreviousInitialTab] = useState(initialTab);
+
+  // Sync with the URL when it changes, e.g. browser back navigation.
+  if (initialTab !== previousInitialTab) {
+    setPreviousInitialTab(initialTab);
+    setActiveTab(initialTab);
+  }
 
   const isActive = event.status === "ACTIVE";
+
+  function handleTabChange(value: string) {
+    const tab = normalizeEventTab(value);
+    setActiveTab(tab);
+    router.replace(`/events/${event.id}?tab=${tab}`, { scroll: false });
+  }
 
   // Poll for status changes made by print-result webhooks.
   useEffect(() => {
@@ -251,10 +267,10 @@ export function EventDetail({
 
       <Tabs.Root
         value={activeTab}
-        onValueChange={setActiveTab}
-        className="flex flex-col gap-4"
+        onValueChange={handleTabChange}
+        className="flex min-w-0 flex-col gap-4"
       >
-        <Tabs.List className="flex gap-1 border-b">
+        <Tabs.List className="flex min-w-0 gap-1 overflow-x-auto border-b [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
           <Tabs.Tab value="processing" className={tabClass}>
             {t("processingTab")}
           </Tabs.Tab>
@@ -278,6 +294,7 @@ export function EventDetail({
             isActive={isActive}
             t={t}
             tStatus={tStatus}
+            tab={activeTab}
             onDelete={handleDeleteProduct}
           />
         </Tabs.Panel>
@@ -291,11 +308,17 @@ export function EventDetail({
             currentUserId={currentUserId}
             canManage={canManageProducts}
             t={t}
+            tab={activeTab}
           />
         </Tabs.Panel>
 
         <Tabs.Panel value="totals">
-          <TotalsTab eventId={event.id} t={t} tState={tState} />
+          <TotalsTab
+            eventId={event.id}
+            t={t}
+            tState={tState}
+            tab={activeTab}
+          />
         </Tabs.Panel>
 
         <Tabs.Panel value="stats">

@@ -5,6 +5,11 @@
     "good": "Good (G)",
     "fair": "Fair"
   },
+  "ProductType": {
+    "book": "Book",
+    "cd": "CD",
+    "dvd": "DVD"
+  },
   "ProductStatus": {
     "added": "Added",
     "registered": "Registered",
@@ -211,7 +216,8 @@
     "printServiceNotConfigured": "The print service is not configured.",
     "printServiceUnreachable": "The print service is unreachable.",
     "printServiceRejected": "The print service rejected the request.",
-    "invalidSvg": "The file must be a valid SVG."
+    "invalidSvg": "The file must be a valid SVG.",
+    "invalidProductType": "Product type is invalid"
   },
   "Emails": {
     "resetPassword": {
@@ -380,6 +386,7 @@
     "author": "Author",
     "unknownAuthor": "Unknown",
     "code": "Code",
+    "type": "Type",
     "price": "Price",
     "conservationState": "Conservation state",
     "status": "Status",
@@ -416,6 +423,7 @@
     "codePlaceholder": "Product code",
     "priceField": "Price (optional)",
     "pricePlaceholder": "Product price",
+    "typeField": "Type",
     "conservationState": "Conservation state",
     "selectConservation": "Select conservation state",
     "nameOrCodeRequired": "Enter a code or a title.",

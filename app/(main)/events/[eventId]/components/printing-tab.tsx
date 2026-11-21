@@ -19,6 +19,7 @@ import {
   DrawerFooter,
 } from "@/components/ui/drawer";
 import { SearchInput } from "@/components/ui/search-input";
+import { eventTabQuery } from "@/lib/event-tabs";
 import { ProductStatus } from "@/lib/product-status";
 import { cn, normalizeForSearch } from "@/lib/utils";
 import { Ellipsis, Printer } from "lucide-react";
@@ -120,16 +121,18 @@ function QueuedProductListItem({
 function PrintProductListItem({
   product,
   event,
+  tab,
   showPrintedBy,
 }: {
   product: ProductRow;
   event: EventData;
+  tab: string;
   showPrintedBy: boolean;
 }) {
   return (
     <li className="flex items-center p-4 transition-colors hover:bg-accent/50">
       <Link
-        href={`/events/${event.id}/products/${product.id}`}
+        href={`/events/${event.id}/products/${product.id}${eventTabQuery(tab)}`}
         className="block min-w-0 flex-1 outline-none focus-visible:ring-3 focus-visible:ring-ring/50 rounded-lg -m-2 p-2"
       >
         <p className="truncate font-medium">
@@ -151,12 +154,14 @@ function PrintProductListItem({
 function PrintProductListItemWithMenu({
   product,
   event,
+  tab,
   t,
   onStopPrint,
   showPrintedBy,
 }: {
   product: ProductRow;
   event: EventData;
+  tab: string;
   t: (key: string, values?: Record<string, string | number>) => string;
   onStopPrint: (productId: string) => void;
   showPrintedBy: boolean;
@@ -167,7 +172,7 @@ function PrintProductListItemWithMenu({
   return (
     <li className="relative flex items-center p-4 transition-colors hover:bg-accent/50">
       <Link
-        href={`/events/${event.id}/products/${product.id}`}
+        href={`/events/${event.id}/products/${product.id}${eventTabQuery(tab)}`}
         className="block min-w-0 flex-1 outline-none focus-visible:ring-3 focus-visible:ring-ring/50 rounded-lg -m-2 p-2"
       >
         <p className="truncate font-medium">
@@ -237,6 +242,7 @@ function PrintProductListItemWithMenu({
 function PrintProductList({
   products,
   event,
+  tab,
   t,
   onStopPrint,
   showMenu,
@@ -244,6 +250,7 @@ function PrintProductList({
 }: {
   products: ProductRow[];
   event: EventData;
+  tab: string;
   t: (key: string, values?: Record<string, string | number>) => string;
   onStopPrint: (productId: string) => void;
   showMenu: boolean;
@@ -258,6 +265,7 @@ function PrintProductList({
             key={product.id}
             product={product}
             event={event}
+            tab={tab}
             t={t}
             onStopPrint={onStopPrint}
             showPrintedBy={showPrintedBy}
@@ -267,6 +275,7 @@ function PrintProductList({
             key={product.id}
             product={product}
             event={event}
+            tab={tab}
             showPrintedBy={showPrintedBy}
           />
         )
@@ -282,6 +291,7 @@ export function PrintingTab({
   printedProducts,
   currentUserId,
   canManage,
+  tab,
   t,
 }: {
   event: EventData;
@@ -290,6 +300,7 @@ export function PrintingTab({
   printedProducts: ProductRow[];
   currentUserId: string;
   canManage: boolean;
+  tab: string;
   t: (key: string, values?: Record<string, string | number>) => string;
 }) {
   const router = useRouter();
@@ -439,6 +450,7 @@ export function PrintingTab({
           <PrintProductList
             products={printingProducts}
             event={event}
+            tab={tab}
             t={t}
             onStopPrint={handleStopPrint}
             showMenu={canManage}
@@ -461,6 +473,7 @@ export function PrintingTab({
           <PrintProductList
             products={recentPrintedProducts}
             event={event}
+            tab={tab}
             t={t}
             onStopPrint={handleStopPrint}
             showMenu={canManage}

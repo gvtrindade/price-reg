@@ -3,6 +3,7 @@
 import { listEventProductsPageAction } from "@/actions/events";
 import { CONSERVATION_LABELS } from "./event-detail";
 import { SearchInput } from "@/components/ui/search-input";
+import { eventTabQuery } from "@/lib/event-tabs";
 import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
 
@@ -21,10 +22,12 @@ type ConservationKey = "asNew" | "nearFine" | "good" | "fair";
 
 export function TotalsTab({
   eventId,
+  tab,
   t,
   tState,
 }: {
   eventId: string;
+  tab: string;
   t: (key: string, values?: Record<string, string | number>) => string;
   tState: (key: ConservationKey) => string;
 }) {
@@ -183,7 +186,7 @@ export function TotalsTab({
                 className="flex items-center gap-4 p-4 transition-colors hover:bg-accent/50"
               >
                 <Link
-                  href={`/events/${eventId}/products/${product.id}`}
+                  href={`/events/${eventId}/products/${product.id}${eventTabQuery(tab)}`}
                   className="flex min-w-0 flex-1 items-center gap-4 outline-none focus-visible:ring-3 focus-visible:ring-ring/50 rounded-lg -m-2 p-2"
                 >
                   <div className="min-w-0 flex-1">

@@ -1,5 +1,6 @@
 import { auth } from "@/lib/auth";
 import { isManagerRole } from "@/lib/event-access";
+import { normalizeEventTab } from "@/lib/event-tabs";
 import { prisma } from "@/lib/prisma";
 import { EventDetail } from "./components/event-detail";
 import { headers } from "next/headers";
@@ -7,8 +8,10 @@ import { redirect } from "next/navigation";
 
 export default async function EventDetailPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ eventId: string }>;
+  searchParams: Promise<{ tab?: string }>;
 }) {
   const session = await auth.api.getSession({ headers: await headers() });
   if (!session?.user) redirect("/login");
@@ -17,6 +20,8 @@ export default async function EventDetailPage({
   const isManager = isManagerRole(roles);
 
   const { eventId } = await params;
+  const { tab } = await searchParams;
+  const initialTab = normalizeEventTab(tab);
   const event = await prisma.event.findUnique({
     where: { id: eventId },
     include: {
@@ -80,6 +85,7 @@ export default async function EventDetailPage({
       canManageProducts={canManageProducts}
       users={users}
       assignedUserIds={assignedUserIds}
+      initialTab={initialTab}
     />
   );
 }
