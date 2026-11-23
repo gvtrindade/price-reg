@@ -25,7 +25,12 @@ const CONSERVATION_OPTIONS = [
   { value: "Good (G)", labelKey: "good" },
   { value: "Fair", labelKey: "fair" },
 ] as const;
+const TYPE_TAB_CLASS = cn(
+  "cursor-pointer flex-1 whitespace-nowrap rounded-t-lg px-4 py-2 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground",
+  "data-[active]:bg-accent data-[active]:text-accent-foreground",
+);
 import { ProductScanner } from "./product-scanner";
+import { Tabs } from "@base-ui/react/tabs";
 import { cn } from "@/lib/utils";
 import { Hand, Plus, ScanLine } from "lucide-react";
 import { useTranslations } from "next-intl";
@@ -62,6 +67,18 @@ export function AddProductDrawer({ eventId }: { eventId: string }) {
     setConservationState("");
     setError(null);
     setPending(false);
+  }
+
+  function handleTypeChange(value: string) {
+    const next = value as ProductType;
+    setType(next);
+    // CD and DVD start with a default price and conservation state, but only
+    // when the user has not filled those fields yet. Tab changes never discard
+    // values that were already entered.
+    if (next === ProductType.CD || next === ProductType.DVD) {
+      setPrice((current) => (current.trim() ? current : "2"));
+      setConservationState((current) => (current.trim() ? current : "Fair"));
+    }
   }
 
   function requestSubmit() {
@@ -196,19 +213,20 @@ export function AddProductDrawer({ eventId }: { eventId: string }) {
             </DrawerHeader>
             <div className="space-y-4 p-4">
               <div className="space-y-2">
-                <Label htmlFor="product-type">{t("typeField")}</Label>
-                <select
-                  id="product-type"
-                  value={type}
-                  onChange={(e) => setType(e.target.value as ProductType)}
-                  className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-xs outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
-                >
-                  {PRODUCT_TYPE_OPTIONS.map((opt) => (
-                    <option key={opt} value={opt}>
-                      {tType(PRODUCT_TYPE_LABEL_KEYS[opt])}
-                    </option>
-                  ))}
-                </select>
+                <Label>{t("typeField")}</Label>
+                <Tabs.Root value={type} onValueChange={handleTypeChange}>
+                  <Tabs.List className="flex gap-1 border-b">
+                    {PRODUCT_TYPE_OPTIONS.map((opt) => (
+                      <Tabs.Tab
+                        key={opt}
+                        value={opt}
+                        className={TYPE_TAB_CLASS}
+                      >
+                        {tType(PRODUCT_TYPE_LABEL_KEYS[opt])}
+                      </Tabs.Tab>
+                    ))}
+                  </Tabs.List>
+                </Tabs.Root>
               </div>
               <div className="space-y-2">
                 <Label htmlFor="product-title">{t("nameField")}</Label>

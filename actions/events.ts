@@ -799,17 +799,28 @@ export async function printProductsAction(data: { eventId: string; productIds: s
       printResultWebhookToken(jobId, data.eventId, session.user.id),
     );
 
-    const products = event.products.map((product) => ({
-      id: product.id,
-      title: product.title ?? "",
-      author: product.author ?? "",
-      code: product.code,
-      price: product.price !== null ? Number(product.price) : null,
-      // The printer service reserves the external id (Ziontech/megabazar) when
-      // it is missing. Sending an existing one makes reprints reuse it instead
-      // of reserving a duplicate.
-      external_id: product.externalId,
-    }));
+    // Prisma returns the products in an unspecified order, but the print order
+    // must match the order in which they were selected.
+    const productById = new Map(
+      event.products.map((product) => [product.id, product]),
+    );
+    const products = data.productIds.flatMap((productId) => {
+      const product = productById.get(productId);
+      if (!product) return [];
+      return [
+        {
+          id: product.id,
+          title: product.title ?? "",
+          author: product.author ?? "",
+          code: product.code,
+          price: product.price !== null ? Number(product.price) : null,
+          // The printer service reserves the external id (Ziontech/megabazar)
+          // when it is missing. Sending an existing one makes reprints reuse it
+          // instead of reserving a duplicate.
+          external_id: product.externalId,
+        },
+      ];
+    });
 
     try {
       const response = await fetch(new URL("/print", serviceUrl), {

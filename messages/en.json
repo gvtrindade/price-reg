@@ -348,7 +348,11 @@
     "noUsers": "No users available.",
     "close": "Close",
     "print": "Print",
-    "printingEllipsis": "Printing..."
+    "printingEllipsis": "Printing...",
+    "scan": "Scan",
+    "scanHint": "Point the camera at the barcode of a queued product. Each scanned product is added to the print list.",
+    "scanAdded": "\"{name}\" added to the print list.",
+    "scanNotFound": "No queued product has the code {code}."
   },
   "StatsTab": {
     "activity": "Activity",

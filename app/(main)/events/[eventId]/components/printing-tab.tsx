@@ -22,7 +22,7 @@ import { SearchInput } from "@/components/ui/search-input";
 import { eventTabQuery } from "@/lib/event-tabs";
 import { ProductStatus } from "@/lib/product-status";
 import { cn, normalizeForSearch } from "@/lib/utils";
-import { Ellipsis, Printer } from "lucide-react";
+import { Ellipsis, Printer, ScanLine } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
@@ -32,6 +32,7 @@ import {
   useState,
   useSyncExternalStore,
 } from "react";
+import { ProductScanner } from "./product-scanner";
 
 const RECENT_WINDOW_MS = 2 * 60 * 60 * 1000;
 const PRINTED_WINDOW_MS = 2 * 24 * 60 * 60 * 1000;
@@ -72,8 +73,10 @@ function getServerSelectionSnapshot(): string[] {
   return EMPTY_SELECTION;
 }
 
-function setStoredSelection(storageKey: string, ids: Set<string>) {
-  sessionStorage.setItem(storageKey, JSON.stringify(Array.from(ids)));
+// The stored order is the order in which the products were selected, which is
+// also the order in which they will be sent to the printer.
+function setStoredSelection(storageKey: string, ids: string[]) {
+  sessionStorage.setItem(storageKey, JSON.stringify(ids));
   window.dispatchEvent(new Event(SELECTION_CHANGE_EVENT));
 }
 
@@ -307,6 +310,14 @@ export function PrintingTab({
   const [error, setError] = useState<string | null>(null);
   const [search, setSearch] = useState("");
   const [isPrinting, setIsPrinting] = useState(false);
+  const [scanOpen, setScanOpen] = useState(false);
+  const [scanResult, setScanResult] = useState<{
+    kind: "added" | "notFound";
+    text: string;
+  } | null>(null);
+  // Remounting the scanner lets the user keep scanning without closing the
+  // drawer; the camera detects a single barcode per mount.
+  const [scanKey, setScanKey] = useState(0);
   const buttonSide = useAddProductButtonSide();
   const selectionStorageKey = `printing-tab-selection:${event.id}`;
   const selectedIds = useSyncExternalStore(
@@ -352,25 +363,35 @@ export function PrintingTab({
 
   const toggleProductSelection = useCallback(
     (productId: string) => {
-      const next = new Set(getSelectionSnapshot(selectionStorageKey));
-      if (next.has(productId)) next.delete(productId);
-      else next.add(productId);
+      const current = getSelectionSnapshot(selectionStorageKey);
+      const next = current.includes(productId)
+        ? current.filter((id) => id !== productId)
+        : [...current, productId];
       setStoredSelection(selectionStorageKey, next);
     },
     [selectionStorageKey],
   );
 
+  const addProductToSelection = useCallback(
+    (productId: string) => {
+      const current = getSelectionSnapshot(selectionStorageKey);
+      if (current.includes(productId)) return;
+      setStoredSelection(selectionStorageKey, [...current, productId]);
+    },
+    [selectionStorageKey],
+  );
+
   async function handlePrint() {
-    if (selectedProductIds.size === 0) return;
+    if (selectedIds.length === 0) return;
     setIsPrinting(true);
     setError(null);
     const res = await printProductsAction({
       eventId: event.id,
-      productIds: Array.from(selectedProductIds),
+      productIds: selectedIds,
     });
     if (res?.error) setError(res.error);
     else {
-      setStoredSelection(selectionStorageKey, new Set());
+      setStoredSelection(selectionStorageKey, []);
       refresh();
     }
     setIsPrinting(false);
@@ -382,6 +403,35 @@ export function PrintingTab({
     if (res?.error) setError(res.error);
     else refresh();
   }
+
+  const handleScannedCode = useCallback(
+    (scannedCode: string) => {
+      const scannedDigits = scannedCode.replace(/\D/g, "");
+      const product = queuedProducts.find((candidate) => {
+        if (!candidate.code) return false;
+        if (candidate.code === scannedCode) return true;
+        const codeDigits = candidate.code.replace(/\D/g, "");
+        return scannedDigits.length > 0 && codeDigits === scannedDigits;
+      });
+      if (!product) {
+        setScanResult({
+          kind: "notFound",
+          text: t("scanNotFound", { code: scannedCode }),
+        });
+        setScanKey((key) => key + 1);
+        return;
+      }
+      addProductToSelection(product.id);
+      setScanResult({
+        kind: "added",
+        text: t("scanAdded", {
+          name: product.title ?? product.code ?? "—",
+        }),
+      });
+      setScanKey((key) => key + 1);
+    },
+    [addProductToSelection, queuedProducts, t],
+  );
 
   return (
     <div className="space-y-6">
@@ -483,19 +533,74 @@ export function PrintingTab({
       </section>
 
       {canManage && (
-        <Button
-          size="icon-lg"
+        <div
           className={cn(
-            "fixed bottom-4 z-30 size-[46px] rounded-full shadow-lg",
+            "fixed bottom-4 z-30 flex items-center gap-2",
             buttonSide === "left" ? "left-4" : "right-4",
           )}
-          aria-label={t("print")}
-          onClick={handlePrint}
-          disabled={selectedProductIds.size === 0 || isPrinting}
         >
-          <Printer />
-        </Button>
+          <Button
+            size="icon-lg"
+            className="size-[46px] rounded-full shadow-lg"
+            aria-label={t("scan")}
+            onClick={() => {
+              setScanResult(null);
+              setScanKey((key) => key + 1);
+              setScanOpen(true);
+            }}
+          >
+            <ScanLine />
+          </Button>
+          <Button
+            size="icon-lg"
+            className="size-[46px] rounded-full shadow-lg"
+            aria-label={t("print")}
+            onClick={handlePrint}
+            disabled={selectedProductIds.size === 0 || isPrinting}
+          >
+            <Printer />
+          </Button>
+        </div>
       )}
+
+      <Drawer
+        open={scanOpen}
+        onOpenChange={(open) => {
+          setScanOpen(open);
+          if (!open) setScanResult(null);
+        }}
+      >
+        <DrawerContent className="mx-auto max-w-3xl">
+          <DrawerHeader>
+            <DrawerTitle>{t("scan")}</DrawerTitle>
+            <DrawerDescription>{t("scanHint")}</DrawerDescription>
+          </DrawerHeader>
+          <div className="flex flex-1 flex-col gap-3 overflow-auto p-4">
+            <ProductScanner
+              key={scanKey}
+              onDetected={handleScannedCode}
+              onManualFallback={() => setScanOpen(false)}
+            />
+            {scanResult && (
+              <p
+                className={cn(
+                  "text-sm",
+                  scanResult.kind === "notFound"
+                    ? "text-destructive"
+                    : "text-muted-foreground",
+                )}
+              >
+                {scanResult.text}
+              </p>
+            )}
+          </div>
+          <DrawerFooter>
+            <Button variant="outline" onClick={() => setScanOpen(false)}>
+              {t("close")}
+            </Button>
+          </DrawerFooter>
+        </DrawerContent>
+      </Drawer>
     </div>
   );
 }
