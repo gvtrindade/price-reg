@@ -3,14 +3,13 @@
 import {
   useCallback,
   useEffect,
-  useMemo,
   useRef,
   useState,
   type MouseEvent as ReactMouseEvent,
   type PointerEvent as ReactPointerEvent,
   type ReactNode,
 } from "react";
-import { useLocale, useTranslations } from "next-intl";
+import { useTranslations } from "next-intl";
 
 import {
   Dialog,
@@ -171,22 +170,8 @@ export function ProductInfoDialog({
   onClose: () => void;
 }) {
   const t = useTranslations("ProductDetail");
-  const tEvent = useTranslations("EventDetail");
   const tState = useTranslations("ConservationState");
   const tStatus = useTranslations("ProductStatus");
-  const locale = useLocale();
-
-  const dateFormatter = useMemo(
-    () =>
-      new Intl.DateTimeFormat(locale, {
-        dateStyle: "medium",
-        timeStyle: "short",
-      }),
-    [locale],
-  );
-
-  const formatDate = (date: Date | null) =>
-    date ? dateFormatter.format(new Date(date)) : "—";
 
   const statusKey =
     product && PRODUCT_STATUS_LABEL_KEYS[product.status as ProductStatus];
@@ -200,7 +185,10 @@ export function ProductInfoDialog({
         if (!open) onClose();
       }}
     >
-      <DialogContent showCloseButton={false} className="sm:max-w-md">
+      <DialogContent
+        showCloseButton={false}
+        className="select-none sm:max-w-md [-webkit-touch-callout:none]"
+      >
         {product && (
           <>
             <DialogHeader>
@@ -223,20 +211,6 @@ export function ProductInfoDialog({
               </InfoRow>
               <InfoRow label={t("status")}>
                 {statusKey ? tStatus(statusKey) : product.status}
-              </InfoRow>
-              <InfoRow label={tEvent("productInfoAddedBy")}>
-                {product.addedByName ?? "—"}
-              </InfoRow>
-              <InfoRow label={tEvent("productInfoAddedAt")}>
-                {formatDate(product.createdAt)}
-              </InfoRow>
-              <InfoRow label={tEvent("productInfoPrintedBy")}>
-                {product.printedByName ?? "—"}
-              </InfoRow>
-              <InfoRow label={tEvent("productInfoPrintedAt")}>
-                {product.printedAt
-                  ? formatDate(product.printedAt)
-                  : tEvent("productInfoNotPrinted")}
               </InfoRow>
             </dl>
           </>
