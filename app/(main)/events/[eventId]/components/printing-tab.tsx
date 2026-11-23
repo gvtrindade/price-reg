@@ -33,6 +33,11 @@ import {
   useSyncExternalStore,
 } from "react";
 import { ProductScanner } from "./product-scanner";
+import {
+  ProductInfoDialog,
+  useProductInfoHold,
+  type ProductHoldHandlers,
+} from "./product-info-dialog";
 
 const RECENT_WINDOW_MS = 2 * 60 * 60 * 1000;
 const PRINTED_WINDOW_MS = 2 * 24 * 60 * 60 * 1000;
@@ -84,10 +89,12 @@ function QueuedProductListItem({
   product,
   selected,
   onToggle,
+  bindHold,
 }: {
   product: ProductRow;
   selected: boolean;
   onToggle: (productId: string) => void;
+  bindHold: (product: ProductRow) => ProductHoldHandlers;
 }) {
   return (
     <li
@@ -95,6 +102,7 @@ function QueuedProductListItem({
       aria-checked={selected}
       aria-label={product.title ?? product.code ?? product.id}
       tabIndex={0}
+      {...bindHold(product)}
       onClick={() => onToggle(product.id)}
       onKeyDown={(e) => {
         if (e.key === " " || e.key === "Enter") {
@@ -102,7 +110,7 @@ function QueuedProductListItem({
           onToggle(product.id);
         }
       }}
-      className="flex cursor-pointer items-center gap-4 p-4 transition-colors hover:bg-accent/50 outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
+      className="flex cursor-pointer select-none items-center gap-4 p-4 transition-colors hover:bg-accent/50 outline-none focus-visible:ring-3 focus-visible:ring-ring/50 [-webkit-touch-callout:none]"
     >
       <input
         type="checkbox"
@@ -126,14 +134,19 @@ function PrintProductListItem({
   event,
   tab,
   showPrintedBy,
+  bindHold,
 }: {
   product: ProductRow;
   event: EventData;
   tab: string;
   showPrintedBy: boolean;
+  bindHold: (product: ProductRow) => ProductHoldHandlers;
 }) {
   return (
-    <li className="flex items-center p-4 transition-colors hover:bg-accent/50">
+    <li
+      {...bindHold(product)}
+      className="flex select-none items-center p-4 transition-colors hover:bg-accent/50 [-webkit-touch-callout:none]"
+    >
       <Link
         href={`/events/${event.id}/products/${product.id}${eventTabQuery(tab)}`}
         className="block min-w-0 flex-1 outline-none focus-visible:ring-3 focus-visible:ring-ring/50 rounded-lg -m-2 p-2"
@@ -161,6 +174,7 @@ function PrintProductListItemWithMenu({
   t,
   onStopPrint,
   showPrintedBy,
+  bindHold,
 }: {
   product: ProductRow;
   event: EventData;
@@ -168,12 +182,16 @@ function PrintProductListItemWithMenu({
   t: (key: string, values?: Record<string, string | number>) => string;
   onStopPrint: (productId: string) => void;
   showPrintedBy: boolean;
+  bindHold: (product: ProductRow) => ProductHoldHandlers;
 }) {
   const [menuOpen, setMenuOpen] = useState(false);
   const [drawerOpen, setDrawerOpen] = useState(false);
 
   return (
-    <li className="relative flex items-center p-4 transition-colors hover:bg-accent/50">
+    <li
+      {...bindHold(product)}
+      className="relative flex select-none items-center p-4 transition-colors hover:bg-accent/50 [-webkit-touch-callout:none]"
+    >
       <Link
         href={`/events/${event.id}/products/${product.id}${eventTabQuery(tab)}`}
         className="block min-w-0 flex-1 outline-none focus-visible:ring-3 focus-visible:ring-ring/50 rounded-lg -m-2 p-2"
@@ -190,7 +208,12 @@ function PrintProductListItemWithMenu({
       <span className="mr-2 shrink-0 text-sm tabular-nums">
         {product.price ?? "—"}
       </span>
-      <div className="relative z-10 flex shrink-0 items-center">
+      <div
+        className="relative z-10 flex shrink-0 items-center"
+        onPointerDown={(e) => e.stopPropagation()}
+        onPointerUp={(e) => e.stopPropagation()}
+        onPointerCancel={(e) => e.stopPropagation()}
+      >
         <DropdownMenu open={menuOpen} onOpenChange={setMenuOpen}>
           <DropdownMenuTrigger
             render={
@@ -250,6 +273,7 @@ function PrintProductList({
   onStopPrint,
   showMenu,
   showPrintedBy = false,
+  bindHold,
 }: {
   products: ProductRow[];
   event: EventData;
@@ -258,6 +282,7 @@ function PrintProductList({
   onStopPrint: (productId: string) => void;
   showMenu: boolean;
   showPrintedBy?: boolean;
+  bindHold: (product: ProductRow) => ProductHoldHandlers;
 }) {
   if (products.length === 0) return null;
   return (
@@ -272,6 +297,7 @@ function PrintProductList({
             t={t}
             onStopPrint={onStopPrint}
             showPrintedBy={showPrintedBy}
+            bindHold={bindHold}
           />
         ) : (
           <PrintProductListItem
@@ -280,6 +306,7 @@ function PrintProductList({
             event={event}
             tab={tab}
             showPrintedBy={showPrintedBy}
+            bindHold={bindHold}
           />
         )
       )}
@@ -319,6 +346,11 @@ export function PrintingTab({
   // drawer; the camera detects a single barcode per mount.
   const [scanKey, setScanKey] = useState(0);
   const buttonSide = useAddProductButtonSide();
+  const {
+    product: infoProduct,
+    bind: bindHold,
+    close: closeInfo,
+  } = useProductInfoHold();
   const selectionStorageKey = `printing-tab-selection:${event.id}`;
   const selectedIds = useSyncExternalStore(
     subscribeToSelection,
@@ -456,6 +488,7 @@ export function PrintingTab({
                   product={product}
                   selected={selectedProductIds.has(product.id)}
                   onToggle={toggleProductSelection}
+                  bindHold={bindHold}
                 />
               ))}
             </ul>
@@ -486,6 +519,7 @@ export function PrintingTab({
                 product={product}
                 selected={selectedProductIds.has(product.id)}
                 onToggle={toggleProductSelection}
+                bindHold={bindHold}
               />
             ))}
           </ul>
@@ -504,6 +538,7 @@ export function PrintingTab({
             t={t}
             onStopPrint={handleStopPrint}
             showMenu={canManage}
+            bindHold={bindHold}
           />
         )}
       </section>
@@ -528,6 +563,7 @@ export function PrintingTab({
             onStopPrint={handleStopPrint}
             showMenu={canManage}
             showPrintedBy
+            bindHold={bindHold}
           />
         )}
       </section>
@@ -601,6 +637,8 @@ export function PrintingTab({
           </DrawerFooter>
         </DrawerContent>
       </Drawer>
+
+      <ProductInfoDialog product={infoProduct} onClose={closeInfo} />
     </div>
   );
 }

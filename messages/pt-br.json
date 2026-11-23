@@ -352,7 +352,12 @@
     "scan": "Escanear",
     "scanHint": "Aponte a câmera para o código de barras de um produto na fila. Cada produto escaneado é adicionado à lista de impressão.",
     "scanAdded": "\"{name}\" adicionado à lista de impressão.",
-    "scanNotFound": "Nenhum produto na fila tem o código {code}."
+    "scanNotFound": "Nenhum produto na fila tem o código {code}.",
+    "productInfoAddedBy": "Registrado por",
+    "productInfoAddedAt": "Registrado em",
+    "productInfoPrintedBy": "Impresso por",
+    "productInfoPrintedAt": "Impresso em",
+    "productInfoNotPrinted": "Ainda não impresso"
   },
   "StatsTab": {
     "activity": "Atividade",
