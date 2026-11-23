@@ -74,18 +74,21 @@ export function useProductInfoHold(): {
     setProduct(null);
   }, [clearTimer]);
 
-  // While the modal is open, releasing the pointer anywhere closes it. Keeping
-  // `heldRef` set until the following click lets `onClickCapture` swallow it.
+  // While the modal is open, releasing the pointer anywhere closes it. On
+  // touch devices the browser may also fire `pointercancel` when its own
+  // long-press gesture kicks in, so only a real touch end (or the next press)
+  // closes it. Keeping `heldRef` set until the following click lets
+  // `onClickCapture` swallow that click.
   useEffect(() => {
     if (!product) return;
     const handleRelease = () => close();
     window.addEventListener("pointerup", handleRelease);
-    window.addEventListener("pointercancel", handleRelease);
-    window.addEventListener("blur", handleRelease);
+    window.addEventListener("touchend", handleRelease);
+    window.addEventListener("pointerdown", handleRelease);
     return () => {
       window.removeEventListener("pointerup", handleRelease);
-      window.removeEventListener("pointercancel", handleRelease);
-      window.removeEventListener("blur", handleRelease);
+      window.removeEventListener("touchend", handleRelease);
+      window.removeEventListener("pointerdown", handleRelease);
     };
   }, [product, close]);
 
@@ -94,7 +97,9 @@ export function useProductInfoHold(): {
   const bind = useCallback(
     (nextProduct: ProductRow): ProductHoldHandlers => ({
       onPointerDown: (event) => {
-        if (event.button !== 0) return;
+        // Peek-on-hold is a touch interaction; mouse users keep the normal
+        // hover/click behaviour.
+        if (event.pointerType !== "touch") return;
         heldRef.current = false;
         clearTimer();
         startRef.current = { x: event.clientX, y: event.clientY };
@@ -114,7 +119,11 @@ export function useProductInfoHold(): {
         if (distance > MOVE_TOLERANCE_PX) clearTimer();
       },
       onPointerUp: close,
-      onPointerCancel: close,
+      onPointerCancel: () => {
+        // The browser takes the gesture over (e.g. its long-press menu). Only
+        // cancel the pending timer; the modal, if open, closes on touch end.
+        if (!heldRef.current) clearTimer();
+      },
       onPointerLeave: () => {
         // Once the modal opened, keep it until the pointer is released.
         if (!heldRef.current) clearTimer();
