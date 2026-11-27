@@ -465,5 +465,12 @@
     "templatePreview": "Template preview",
     "saveError": "Failed to save template.",
     "deleteError": "Failed to delete template."
+  },
+  "MegaBazar": {
+    "searchPlaceholder": "Search by title or author",
+    "clearSearch": "Clear search",
+    "noBooks": "No books found.",
+    "loadError": "Could not load the books. Try again.",
+    "loading": "Loading..."
   }
 }

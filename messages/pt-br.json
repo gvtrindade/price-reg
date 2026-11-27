@@ -465,5 +465,12 @@
     "templatePreview": "Pré-visualização do modelo",
     "saveError": "Falha ao salvar o modelo.",
     "deleteError": "Falha ao excluir o modelo."
+  },
+  "MegaBazar": {
+    "searchPlaceholder": "Buscar por título ou autor",
+    "clearSearch": "Limpar busca",
+    "noBooks": "Nenhum livro encontrado.",
+    "loadError": "Não foi possível carregar os livros. Tente novamente.",
+    "loading": "Carregando..."
   }
 }
