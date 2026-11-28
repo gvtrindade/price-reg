@@ -163,6 +163,8 @@
     "priceFinderNotConfigured": "O serviço de preços não está configurado.",
     "priceFinderUnreachable": "O serviço de preços está indisponível. Tente novamente.",
     "priceFinderRejected": "O serviço de preços rejeitou este produto.",
+    "productAlreadySold": "Este produto já foi vendido e não pode ser excluído.",
+    "productNotInCatalog": "Este produto não foi encontrado no catálogo da loja e não pode ser excluído.",
     "productNotRegistered": "Este produto não pode ser reprocessado.",
     "productTooRecent": "Aguarde pelo menos 5 minutos antes de reprocessar.",
     "noPrintTemplate": "Nenhum modelo de impressão configurado para este evento.",

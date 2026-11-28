@@ -141,6 +141,7 @@ model Product {
   status            String
   price             Decimal? @db.Decimal(10, 2)
   priced            Boolean  @default(false)
+  isSold            Boolean  @default(false) @map("is_sold")
   createdAt         DateTime @default(now()) @db.Timestamptz
   updatedAt         DateTime @updatedAt @db.Timestamptz
 

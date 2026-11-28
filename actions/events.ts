@@ -633,6 +633,7 @@ export async function listEventProductsPageAction(data: {
             code: true,
             conservationState: true,
             price: true,
+            isSold: true,
           },
         }),
         prisma.product.count({ where }),
@@ -661,10 +662,40 @@ export async function deleteProductAction(data: { productId: string }) {
 
     const product = await prisma.product.findUnique({
       where: { id: data.productId },
-      select: { eventId: true },
+      select: { eventId: true, externalId: true },
     });
     if (!product) return { error: t("productNotFound") };
     if (!(await requireEventManager(product.eventId))) return { error: t("notManager") };
+
+    // A product with a catalog id must be removed from the store first. Only a
+    // 204 means it was deleted; 404 (not in the catalog) and 409 (already
+    // sold) must keep the local product.
+    if (product.externalId) {
+      const serviceUrl = process.env.NEXT_PRODUCT_PRICE_FINDER_URL;
+      if (!serviceUrl) return { error: t("priceFinderNotConfigured") };
+
+      let response: Response;
+      try {
+        response = await fetch(
+          new URL(
+            `/products/${encodeURIComponent(product.externalId)}`,
+            serviceUrl,
+          ),
+          {
+            method: "DELETE",
+            cache: "no-store",
+            signal: AbortSignal.timeout(15_000),
+          },
+        );
+      } catch {
+        return { error: t("priceFinderUnreachable") };
+      }
+
+      if (response.status === 409) return { error: t("productAlreadySold") };
+      if (response.status === 404) return { error: t("productNotInCatalog") };
+      if (response.status !== 204)
+        return { error: t("priceFinderRejected") };
+    }
 
     await prisma.product.delete({ where: { id: data.productId } });
     return { error: null };

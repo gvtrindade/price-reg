@@ -16,6 +16,7 @@ interface TotalsProduct {
   code: string | null;
   conservationState: string;
   price: string | null;
+  isSold: boolean;
 }
 
 type ConservationKey = "asNew" | "nearFine" | "good" | "fair";
@@ -187,7 +188,9 @@ export function TotalsTab({
               >
                 <Link
                   href={`/events/${eventId}/products/${product.id}${eventTabQuery(tab)}`}
-                  className="flex min-w-0 flex-1 items-center gap-4 outline-none focus-visible:ring-3 focus-visible:ring-ring/50 rounded-lg -m-2 p-2"
+                  className={`flex min-w-0 flex-1 items-center gap-4 outline-none focus-visible:ring-3 focus-visible:ring-ring/50 rounded-lg -m-2 p-2 ${
+                    product.isSold ? "line-through opacity-60" : ""
+                  }`}
                 >
                   <div className="min-w-0 flex-1">
                     <p className="truncate font-medium">

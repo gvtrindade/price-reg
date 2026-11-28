@@ -210,6 +210,8 @@
     "priceFinderNotConfigured": "The price service is not configured.",
     "priceFinderUnreachable": "The price service is unreachable. Please try again.",
     "priceFinderRejected": "The price service rejected this product.",
+    "productAlreadySold": "This product has already been sold and cannot be deleted.",
+    "productNotInCatalog": "This product was not found in the store catalog and cannot be deleted.",
     "productNotRegistered": "This product cannot be reprocessed.",
     "productTooRecent": "Please wait at least 5 minutes before reprocessing.",
     "noPrintTemplate": "No print template configured for this event.",

@@ -1,6 +1,9 @@
 "use server";
 
-import { MEGA_BAZAR_EVENT_TITLE } from "@/lib/mega-bazar";
+import {
+  MEGA_BAZAR_EVENT_TITLE,
+  normalizeSearchTerm,
+} from "@/lib/mega-bazar";
 import { prisma } from "@/lib/prisma";
 import { Prisma } from "@/prisma/generated/client";
 
@@ -45,20 +48,43 @@ export async function listMegaBazarBooksAction(data: {
 
   const limit = Math.min(Math.max(data.limit ?? 25, 1), 100);
   const offset = Math.max(data.offset ?? 0, 0);
-  const query = data.query?.trim() ?? "";
+  const normalizedQuery = normalizeSearchTerm(data.query?.trim() ?? "");
 
   const where: Prisma.ProductWhereInput = {
     eventId: event.id,
     price: { not: null },
-    ...(query
-      ? {
-          OR: [
-            { title: { contains: query, mode: "insensitive" } },
-            { author: { contains: query, mode: "insensitive" } },
-          ],
-        }
-      : {}),
   };
+
+  // Filter in memory for search so accents and case are ignored on both
+  // sides. The catalog of a single event is small enough for this.
+  if (normalizedQuery) {
+    const allBooks = await prisma.product.findMany({
+      where,
+      orderBy: [{ title: { sort: "asc", nulls: "last" } }, { id: "asc" }],
+      select: {
+        id: true,
+        title: true,
+        author: true,
+        price: true,
+      },
+    });
+    const matchingBooks = allBooks.filter(
+      (book) =>
+        normalizeSearchTerm(book.title ?? "").includes(normalizedQuery) ||
+        normalizeSearchTerm(book.author ?? "").includes(normalizedQuery),
+    );
+    const page = matchingBooks.slice(offset, offset + limit);
+    const nextOffset = offset + page.length;
+
+    return {
+      books: page.map((book) => ({
+        ...book,
+        price: book.price === null ? null : String(book.price),
+      })),
+      total: matchingBooks.length,
+      nextOffset: nextOffset < matchingBooks.length ? nextOffset : null,
+    };
+  }
 
   const [books, total] = await Promise.all([
     prisma.product.findMany({
